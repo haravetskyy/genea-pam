@@ -1,4 +1,4 @@
-namespace GeneaPam.Api.Configuration;
+namespace GeneaPam.Api.Infrastructure.Persistence;
 
 public class DatabaseOptions
 {
