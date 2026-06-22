@@ -3,7 +3,7 @@ pre-commit:
   commands:
     format-check:
       glob: "server/**/*.cs"
-      run: dotnet format server/Genea.slnx --verify-no-changes
+      run: dotnet format server/GeneaPam.slnx --verify-no-changes
     build-check:
       glob: "server/**/*.cs"
-      run: dotnet build server/Genea.slnx --no-restore
+      run: dotnet build server/GeneaPam.slnx --no-restore
