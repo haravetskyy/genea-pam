@@ -1,0 +1,19 @@
+# Environment
+.env
+
+# .NET build artifacts
+server/bin/
+server/obj/
+server/src/**/bin/
+server/src/**/obj/
+server/**/.vs/
+
+# IDE
+.idea/
+.vscode/
+*.user
+*.suo
+
+# OS
+.DS_Store
+Thumbs.db
