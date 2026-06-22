@@ -16,6 +16,8 @@
     <PackageReference Include="Npgsql" Version="10.0.3" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.2" />
     <PackageReference Include="StackExchange.Redis" Version="3.0.0" />
+    <PackageReference Include="WolverineFx" Version="3.10.0" />
+    <PackageReference Include="WolverineFx.Postgresql" Version="3.10.0" />
   </ItemGroup>
 
 </Project>
