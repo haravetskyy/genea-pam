@@ -1,6 +1,6 @@
-namespace GeneaPam.Api.Configuration;
+namespace GeneaPam.Api.Infrastructure.Storage;
 
-public class MinioOptions
+public class StorageOptions
 {
     public const string SectionName = "Minio";
 
