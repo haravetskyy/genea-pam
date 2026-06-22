@@ -1,3 +1,4 @@
+using GeneaPam.Api.Infrastructure.Jobs;
 using GeneaPam.Api.Infrastructure.Messaging;
 using GeneaPam.Api.Infrastructure.Persistence;
 using GeneaPam.Api.Infrastructure.Storage;
@@ -7,6 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddPersistence(builder.Configuration);
 builder.Services.AddMessaging(builder.Configuration);
 builder.Services.AddStorage(builder.Configuration);
+builder.Host.AddJobs(builder.Configuration);
 
 var app = builder.Build();
 
