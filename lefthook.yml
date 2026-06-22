@@ -1,0 +1,9 @@
+pre-commit:
+  parallel: true
+  commands:
+    format-check:
+      glob: "server/**/*.cs"
+      run: dotnet format server/Genea.slnx --verify-no-changes
+    build-check:
+      glob: "server/**/*.cs"
+      run: dotnet build server/Genea.slnx --no-restore
