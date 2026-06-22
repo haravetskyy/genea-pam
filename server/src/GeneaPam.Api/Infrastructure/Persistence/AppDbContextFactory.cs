@@ -1,8 +1,7 @@
-using GeneaPam.Api.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
-namespace GeneaPam.Api.Data;
+namespace GeneaPam.Api.Infrastructure.Persistence;
 
 public class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
 {
