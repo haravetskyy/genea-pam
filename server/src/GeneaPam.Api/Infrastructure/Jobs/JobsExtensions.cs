@@ -18,7 +18,7 @@ public static class JobsExtensions
         });
 
         host.ConfigureServices(services =>
-            services.AddSingleton<IJobDispatcher, WolverineJobDispatcher>());
+            services.AddScoped<IJobDispatcher, WolverineJobDispatcher>());
 
         return host;
     }
