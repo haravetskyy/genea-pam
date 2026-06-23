@@ -6,7 +6,11 @@ server/bin/
 server/obj/
 server/src/**/bin/
 server/src/**/obj/
+server/tests/**/bin/
+server/tests/**/obj/
 server/**/.vs/
+bin/
+obj/
 
 # IDE
 .idea/

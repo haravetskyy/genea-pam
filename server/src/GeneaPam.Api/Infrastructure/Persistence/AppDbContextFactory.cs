@@ -12,11 +12,10 @@ public class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
             .AddEnvironmentVariables()
             .Build();
 
-        var dbOptions = config.GetSection(DatabaseOptions.SectionName).Get<DatabaseOptions>()
-            ?? throw new InvalidOperationException("Database configuration is missing");
+        var connectionString = DatabaseConfig.GetConnectionString(config);
 
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql(dbOptions.ConnectionString)
+            .UseNpgsql(connectionString)
             .Options;
 
         return new AppDbContext(options);

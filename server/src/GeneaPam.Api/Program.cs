@@ -1,3 +1,4 @@
+using GeneaPam.Api.Infrastructure.Http;
 using GeneaPam.Api.Infrastructure.Jobs;
 using GeneaPam.Api.Infrastructure.Messaging;
 using GeneaPam.Api.Infrastructure.Observability;
@@ -11,9 +12,17 @@ builder.Services.AddPersistence(builder.Configuration);
 builder.Services.AddMessaging(builder.Configuration);
 builder.Services.AddStorage(builder.Configuration);
 builder.Host.AddJobs(builder.Configuration);
+builder.Services.AddHttpInfrastructure();
 
 var app = builder.Build();
 
+app.UseHttpInfrastructure();
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
+app.MapEndpoints();
+
+if (!app.Environment.IsProduction())
+    app.MapGet("/test/throw", () => { throw new InvalidOperationException("test exception"); });
 
 app.Run();
+
+public partial class Program;
