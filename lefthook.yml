@@ -1,0 +1,5 @@
+pre-commit:
+  commands:
+    format-check:
+      glob: "server/**/*.cs"
+      run: dotnet csharpier format server/ && git add server/
