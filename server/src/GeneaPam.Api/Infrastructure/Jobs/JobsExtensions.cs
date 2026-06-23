@@ -28,6 +28,12 @@ public static class JobsExtensions
 
         return host;
     }
+
+    private sealed class WolverineJobDispatcher(IMessageBus bus) : IJobDispatcher
+    {
+        public ValueTask SendAsync<T>(T message, CancellationToken cancellationToken = default)
+            where T : class => bus.SendAsync(message);
+    }
 }
 
 internal sealed class RetryAndDeadLetterPolicy : IHandlerPolicy

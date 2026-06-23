@@ -1,9 +1,6 @@
 using GeneaPam.Api.Features.Auth;
 using GeneaPam.Api.Infrastructure.Jobs;
-using GeneaPam.Api.Infrastructure.Messaging;
-using GeneaPam.Api.Infrastructure.Observability;
 using GeneaPam.Api.Infrastructure.Persistence;
-using GeneaPam.Api.Infrastructure.Storage;
 using GeneaPam.Api.IntegrationTests.Infrastructure.Adapters;
 using GeneaPam.Api.UnitTests.Infrastructure.Adapters;
 using Microsoft.AspNetCore.Hosting;
@@ -40,9 +37,6 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 
             services.AddDbContext<AppDbContext>(o => o.UseNpgsql(_postgres.GetConnectionString()));
 
-            services.AddSingleton<IObservabilityAdapter, NullObservabilityAdapter>();
-            services.AddSingleton<IObjectStorage, NullObjectStorage>();
-            services.AddSingleton<IMessageBroker, InMemoryMessageBroker>();
             services.AddSingleton<InMemoryJobDispatcher>();
             services.AddSingleton<IJobDispatcher>(sp =>
                 sp.GetRequiredService<InMemoryJobDispatcher>()

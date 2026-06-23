@@ -1,8 +1,4 @@
-using GeneaPam.Api.Infrastructure.Messaging;
-using GeneaPam.Api.Infrastructure.Observability;
 using GeneaPam.Api.Infrastructure.Persistence;
-using GeneaPam.Api.Infrastructure.Storage;
-using GeneaPam.Api.IntegrationTests.Infrastructure.Adapters;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -36,10 +32,6 @@ public sealed class EmailApiFactory : WebApplicationFactory<Program>, IAsyncLife
                 services.Remove(descriptor);
 
             services.AddDbContext<AppDbContext>(o => o.UseNpgsql(_postgres.GetConnectionString()));
-
-            services.AddSingleton<IObservabilityAdapter, NullObservabilityAdapter>();
-            services.AddSingleton<IObjectStorage, NullObjectStorage>();
-            services.AddSingleton<IMessageBroker, InMemoryMessageBroker>();
         });
     }
 

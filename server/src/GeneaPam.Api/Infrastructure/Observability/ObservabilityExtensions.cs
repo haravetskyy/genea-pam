@@ -19,10 +19,6 @@ public static class ObservabilityExtensions
             });
         }
 
-        builder.ConfigureServices(services =>
-            services.AddSingleton<IObservabilityAdapter, SentryObservabilityAdapter>()
-        );
-
         return builder;
     }
 }
