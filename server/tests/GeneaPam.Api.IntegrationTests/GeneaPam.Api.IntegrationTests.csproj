@@ -1,5 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -29,5 +28,4 @@
     <ProjectReference Include="..\..\src\GeneaPam.Api\GeneaPam.Api.csproj" />
     <ProjectReference Include="..\GeneaPam.Api.UnitTests\GeneaPam.Api.UnitTests.csproj" />
   </ItemGroup>
-
 </Project>

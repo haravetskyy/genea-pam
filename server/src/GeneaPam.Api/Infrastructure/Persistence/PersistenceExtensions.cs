@@ -6,12 +6,18 @@ namespace GeneaPam.Api.Infrastructure.Persistence;
 
 public static class PersistenceExtensions
 {
-    public static IServiceCollection AddPersistence(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddPersistence(
+        this IServiceCollection services,
+        IConfiguration configuration
+    )
     {
         services.AddDatabaseConfig(configuration);
-        services.AddDbContext<AppDbContext>((sp, o) => o.UseNpgsql(sp.GetRequiredService<NpgsqlDataSource>()));
+        services.AddDbContext<AppDbContext>(
+            (sp, o) => o.UseNpgsql(sp.GetRequiredService<NpgsqlDataSource>())
+        );
 
-        services.AddIdentity<ApplicationUser, ApplicationRole>(o =>
+        services
+            .AddIdentity<ApplicationUser, ApplicationRole>(o =>
             {
                 o.Password.RequiredLength = 8;
                 o.Password.RequireDigit = false;

@@ -23,7 +23,8 @@ public static class JobsExtensions
         });
 
         host.ConfigureServices(services =>
-            services.AddScoped<IJobDispatcher, WolverineJobDispatcher>());
+            services.AddScoped<IJobDispatcher, WolverineJobDispatcher>()
+        );
 
         return host;
     }
@@ -31,12 +32,21 @@ public static class JobsExtensions
 
 internal sealed class RetryAndDeadLetterPolicy : IHandlerPolicy
 {
-    public void Apply(IReadOnlyList<HandlerChain> chains, GenerationRules rules, IServiceContainer container)
+    public void Apply(
+        IReadOnlyList<HandlerChain> chains,
+        GenerationRules rules,
+        IServiceContainer container
+    )
     {
         foreach (var chain in chains)
         {
-            chain.OnAnyException()
-                .RetryWithCooldown(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(15));
+            chain
+                .OnAnyException()
+                .RetryWithCooldown(
+                    TimeSpan.FromSeconds(1),
+                    TimeSpan.FromSeconds(5),
+                    TimeSpan.FromSeconds(15)
+                );
         }
     }
 }

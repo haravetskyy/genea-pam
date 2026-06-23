@@ -28,13 +28,14 @@ public sealed class EmailApiFactory : WebApplicationFactory<Program>, IAsyncLife
 
         builder.ConfigureServices(services =>
         {
-            foreach (var descriptor in services
-                         .Where(d => d.ServiceType == typeof(DbContextOptions<AppDbContext>))
-                         .ToList())
+            foreach (
+                var descriptor in services
+                    .Where(d => d.ServiceType == typeof(DbContextOptions<AppDbContext>))
+                    .ToList()
+            )
                 services.Remove(descriptor);
 
-            services.AddDbContext<AppDbContext>(o =>
-                o.UseNpgsql(_postgres.GetConnectionString()));
+            services.AddDbContext<AppDbContext>(o => o.UseNpgsql(_postgres.GetConnectionString()));
 
             services.AddSingleton<IObservabilityAdapter, NullObservabilityAdapter>();
             services.AddSingleton<IObjectStorage, NullObjectStorage>();

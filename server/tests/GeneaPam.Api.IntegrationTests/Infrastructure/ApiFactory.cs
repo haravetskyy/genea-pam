@@ -1,3 +1,4 @@
+using GeneaPam.Api.Features.Auth;
 using GeneaPam.Api.Infrastructure.Jobs;
 using GeneaPam.Api.Infrastructure.Messaging;
 using GeneaPam.Api.Infrastructure.Observability;
@@ -21,25 +22,32 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         .Build();
 
     public WireMockServer WireMock { get; } = WireMockServer.Start();
+    public FakeDnsResolver DnsResolver { get; } = new FakeDnsResolver();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseSetting("Database:ConnectionString", _postgres.GetConnectionString());
+        builder.UseSetting("HibpBaseUrl", WireMock.Url!);
 
         builder.ConfigureServices(services =>
         {
-            foreach (var descriptor in services
-                         .Where(d => d.ServiceType == typeof(DbContextOptions<AppDbContext>))
-                         .ToList())
+            foreach (
+                var descriptor in services
+                    .Where(d => d.ServiceType == typeof(DbContextOptions<AppDbContext>))
+                    .ToList()
+            )
                 services.Remove(descriptor);
 
-            services.AddDbContext<AppDbContext>(o =>
-                o.UseNpgsql(_postgres.GetConnectionString()));
+            services.AddDbContext<AppDbContext>(o => o.UseNpgsql(_postgres.GetConnectionString()));
 
             services.AddSingleton<IObservabilityAdapter, NullObservabilityAdapter>();
             services.AddSingleton<IObjectStorage, NullObjectStorage>();
             services.AddSingleton<IMessageBroker, InMemoryMessageBroker>();
-            services.AddScoped<IJobDispatcher, InMemoryJobDispatcher>();
+            services.AddSingleton<InMemoryJobDispatcher>();
+            services.AddSingleton<IJobDispatcher>(sp =>
+                sp.GetRequiredService<InMemoryJobDispatcher>()
+            );
+            services.AddSingleton<IDnsResolver>(DnsResolver);
         });
     }
 

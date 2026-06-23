@@ -1,7 +1,7 @@
+using GeneaPam.Api.Infrastructure.Persistence;
 using GeneaPam.Api.IntegrationTests.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using GeneaPam.Api.Infrastructure.Persistence;
 
 namespace GeneaPam.Api.IntegrationTests.Auth;
 
@@ -13,7 +13,7 @@ public sealed class IdentitySchemaTests(ApiFactory factory) : IntegrationTest(fa
         "ContactEmail",
         "IsContactEmailVisible",
         "LanguagePreference",
-        "AvatarObjectKey"
+        "AvatarObjectKey",
     ];
 
     [Fact]
@@ -22,12 +22,14 @@ public sealed class IdentitySchemaTests(ApiFactory factory) : IntegrationTest(fa
         await using var scope = factory.Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        var columns = await db.Database
-            .SqlQueryRaw<string>("""
+        var columns = await db
+            .Database.SqlQueryRaw<string>(
+                """
                 SELECT column_name
                 FROM information_schema.columns
                 WHERE table_name = 'AspNetUsers'
-                """)
+                """
+            )
             .ToListAsync();
 
         foreach (var expected in ExpectedColumns)

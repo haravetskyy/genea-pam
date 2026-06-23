@@ -4,12 +4,14 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace GeneaPam.Api.Infrastructure.Http;
 
-public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger) : IExceptionHandler
+public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger)
+    : IExceptionHandler
 {
     public async ValueTask<bool> TryHandleAsync(
         HttpContext httpContext,
         Exception exception,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         logger.LogError(exception, "Unhandled exception");
 
@@ -25,7 +27,8 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
             problem,
             options: null,
             contentType: "application/problem+json",
-            cancellationToken: cancellationToken);
+            cancellationToken: cancellationToken
+        );
         return true;
     }
 }

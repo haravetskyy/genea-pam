@@ -10,5 +10,4 @@ public sealed class StorageConfigTests(ApiFactory factory) : IntegrationTest(fac
     {
         Assert.Equal("Storage", StorageOptions.SectionName);
     }
-
 }
