@@ -28,9 +28,9 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 
         builder.ConfigureServices(services =>
         {
-            var descriptor = services.SingleOrDefault(d =>
-                d.ServiceType == typeof(DbContextOptions<AppDbContext>));
-            if (descriptor is not null)
+            foreach (var descriptor in services
+                         .Where(d => d.ServiceType == typeof(DbContextOptions<AppDbContext>))
+                         .ToList())
                 services.Remove(descriptor);
 
             services.AddDbContext<AppDbContext>(o =>
