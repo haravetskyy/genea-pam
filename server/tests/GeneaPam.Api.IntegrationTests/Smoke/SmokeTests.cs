@@ -4,7 +4,7 @@ using GeneaPam.Api.IntegrationTests.Infrastructure;
 
 namespace GeneaPam.Api.IntegrationTests.Smoke;
 
-public sealed class SmokeTests(ApiFactory factory) : BaseIntegrationTest(factory)
+public sealed class SmokeTests(ApiFactory factory) : IntegrationTest(factory)
 {
     [Fact]
     public async Task HealthEndpoint_Returns200()
