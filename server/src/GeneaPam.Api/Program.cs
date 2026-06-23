@@ -1,3 +1,4 @@
+using GeneaPam.Api.Infrastructure.Email;
 using GeneaPam.Api.Infrastructure.Http;
 using GeneaPam.Api.Infrastructure.Jobs;
 using GeneaPam.Api.Infrastructure.Messaging;
@@ -11,6 +12,7 @@ builder.WebHost.AddObservability(builder.Configuration);
 builder.Services.AddPersistence(builder.Configuration);
 builder.Services.AddMessaging(builder.Configuration);
 builder.Services.AddStorage(builder.Configuration);
+builder.Services.AddEmail(builder.Configuration);
 builder.Host.AddJobs(builder.Configuration);
 builder.Services.AddHttpInfrastructure();
 
