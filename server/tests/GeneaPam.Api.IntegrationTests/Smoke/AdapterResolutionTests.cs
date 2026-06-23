@@ -1,3 +1,4 @@
+using GeneaPam.Api.Infrastructure.Jobs;
 using GeneaPam.Api.Infrastructure.Messaging;
 using GeneaPam.Api.Infrastructure.Observability;
 using GeneaPam.Api.Infrastructure.Storage;
@@ -30,5 +31,13 @@ public sealed class AdapterResolutionTests(ApiFactory factory) : IntegrationTest
         using var scope = factory.Services.CreateScope();
         var adapter = scope.ServiceProvider.GetRequiredService<IMessageBroker>();
         Assert.NotNull(adapter);
+    }
+
+    [Fact]
+    public void IJobDispatcher_ResolvesFromDi()
+    {
+        using var scope = factory.Services.CreateScope();
+        var dispatcher = scope.ServiceProvider.GetRequiredService<IJobDispatcher>();
+        Assert.NotNull(dispatcher);
     }
 }

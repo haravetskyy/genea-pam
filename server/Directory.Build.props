@@ -1,0 +1,8 @@
+<Project>
+  <!-- WolverineFx 3.x declares upper-bound constraints on Microsoft.Extensions.* that conflict
+       with .NET 10 packages. Suppress the hard error so NuGet resolves to the higher version,
+       matching how GeneaPam.Api.IntegrationTests handles this via Mvc.Testing's transitive pins. -->
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);NU1107;NU1608</NoWarn>
+  </PropertyGroup>
+</Project>

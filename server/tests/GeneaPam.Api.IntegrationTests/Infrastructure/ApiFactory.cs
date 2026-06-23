@@ -1,8 +1,10 @@
+using GeneaPam.Api.Infrastructure.Jobs;
 using GeneaPam.Api.Infrastructure.Messaging;
 using GeneaPam.Api.Infrastructure.Observability;
 using GeneaPam.Api.Infrastructure.Persistence;
 using GeneaPam.Api.Infrastructure.Storage;
 using GeneaPam.Api.IntegrationTests.Infrastructure.Adapters;
+using GeneaPam.Api.UnitTests.Infrastructure.Adapters;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -37,6 +39,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
             services.AddSingleton<IObservabilityAdapter, NullObservabilityAdapter>();
             services.AddSingleton<IObjectStorage, NullObjectStorage>();
             services.AddSingleton<IMessageBroker, InMemoryMessageBroker>();
+            services.AddScoped<IJobDispatcher, InMemoryJobDispatcher>();
         });
     }
 
