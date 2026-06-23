@@ -13,12 +13,14 @@ public static class AuthExtensions
         services.AddSingleton<ILookupClient>(_ => new LookupClient());
         services.AddSingleton<IDnsResolver, DnsClientResolver>();
 
-        var hibpBaseUrl = configuration["HibpBaseUrl"] ?? "https://api.pwnedpasswords.com/";
+        var authOptions =
+            configuration.GetSection(AuthOptions.SectionName).Get<AuthOptions>()
+            ?? new AuthOptions();
         services.AddHttpClient(
             "hibp",
             client =>
             {
-                client.BaseAddress = new Uri(hibpBaseUrl.TrimEnd('/') + "/");
+                client.BaseAddress = new Uri(authOptions.HibpBaseUrl.TrimEnd('/') + "/");
                 client.DefaultRequestHeaders.Add("Add-Padding", "true");
             }
         );

@@ -27,7 +27,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseSetting("Database:ConnectionString", _postgres.GetConnectionString());
-        builder.UseSetting("HibpBaseUrl", WireMock.Url!);
+        builder.UseSetting("Auth:HibpBaseUrl", WireMock.Url!);
 
         builder.ConfigureServices(services =>
         {
