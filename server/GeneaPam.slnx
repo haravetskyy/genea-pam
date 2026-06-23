@@ -4,5 +4,6 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/GeneaPam.Api.IntegrationTests/GeneaPam.Api.IntegrationTests.csproj" />
+    <Project Path="tests/GeneaPam.Api.UnitTests/GeneaPam.Api.UnitTests.csproj" />
   </Folder>
 </Solution>
