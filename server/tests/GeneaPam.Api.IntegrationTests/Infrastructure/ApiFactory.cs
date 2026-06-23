@@ -1,0 +1,61 @@
+using GeneaPam.Api.Infrastructure.Jobs;
+using GeneaPam.Api.Infrastructure.Messaging;
+using GeneaPam.Api.Infrastructure.Observability;
+using GeneaPam.Api.Infrastructure.Persistence;
+using GeneaPam.Api.Infrastructure.Storage;
+using GeneaPam.Api.IntegrationTests.Infrastructure.Adapters;
+using GeneaPam.Api.UnitTests.Infrastructure.Adapters;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Testcontainers.PostgreSql;
+using WireMock.Server;
+
+namespace GeneaPam.Api.IntegrationTests.Infrastructure;
+
+public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
+{
+    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder()
+        .WithImage("postgres:17-alpine")
+        .Build();
+
+    public WireMockServer WireMock { get; } = WireMockServer.Start();
+
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        builder.UseSetting("Database:ConnectionString", _postgres.GetConnectionString());
+
+        builder.ConfigureServices(services =>
+        {
+            var descriptor = services.SingleOrDefault(d =>
+                d.ServiceType == typeof(DbContextOptions<AppDbContext>));
+            if (descriptor is not null)
+                services.Remove(descriptor);
+
+            services.AddDbContext<AppDbContext>(o =>
+                o.UseNpgsql(_postgres.GetConnectionString()));
+
+            services.AddSingleton<IObservabilityAdapter, NullObservabilityAdapter>();
+            services.AddSingleton<IObjectStorage, NullObjectStorage>();
+            services.AddSingleton<IMessageBroker, InMemoryMessageBroker>();
+            services.AddScoped<IJobDispatcher, InMemoryJobDispatcher>();
+        });
+    }
+
+    public async Task InitializeAsync()
+    {
+        await _postgres.StartAsync();
+
+        await using var scope = Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        await db.Database.MigrateAsync();
+    }
+
+    public new async Task DisposeAsync()
+    {
+        WireMock.Stop();
+        await base.DisposeAsync();
+        await _postgres.DisposeAsync();
+    }
+}

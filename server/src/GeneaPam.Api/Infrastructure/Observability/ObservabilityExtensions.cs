@@ -4,15 +4,20 @@ public static class ObservabilityExtensions
 {
     public static IWebHostBuilder AddObservability(this IWebHostBuilder builder, IConfiguration configuration)
     {
-        var dsn = configuration["SENTRY_DSN"]
-            ?? throw new InvalidOperationException("SENTRY_DSN configuration is missing");
+        var dsn = configuration["SENTRY_DSN"];
 
-        builder.UseSentry(o =>
+        if (!string.IsNullOrEmpty(dsn))
         {
-            o.Dsn = dsn;
-            o.TracesSampleRate = 1.0;
-            o.SendDefaultPii = false;
-        });
+            builder.UseSentry(o =>
+            {
+                o.Dsn = dsn;
+                o.TracesSampleRate = 1.0;
+                o.SendDefaultPii = false;
+            });
+        }
+
+        builder.ConfigureServices(services =>
+            services.AddSingleton<IObservabilityAdapter, SentryObservabilityAdapter>());
 
         return builder;
     }
