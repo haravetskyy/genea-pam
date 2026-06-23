@@ -39,6 +39,8 @@ public sealed class RegisterEndpoint : IEndpoint
                             AuthErrors.PasswordTooShort,
                         var c when c == AuthErrors.PasswordBreached.Code =>
                             AuthErrors.PasswordBreached,
+                        var c when c == AuthErrors.EmailDisposable.Code =>
+                            AuthErrors.EmailDisposable,
                         _ => AuthErrors.EmailInvalid,
                     }
                 )

@@ -35,6 +35,7 @@
     <PackageReference Include="RazorLight" Version="2.3.1" />
     <PackageReference Include="Scalar.AspNetCore" Version="2.16.5" />
     <PackageReference Include="Sentry.AspNetCore" Version="6.6.0" />
+    <PackageReference Include="Soenneker.Validators.Email.Disposable" Version="4.0.4431" />
     <PackageReference Include="StackExchange.Redis" Version="3.0.0" />
     <PackageReference Include="WolverineFx" Version="3.10.0" />
     <PackageReference Include="WolverineFx.Postgresql" Version="3.10.0" />
