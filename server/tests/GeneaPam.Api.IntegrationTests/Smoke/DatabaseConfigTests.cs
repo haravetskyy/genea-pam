@@ -6,7 +6,7 @@ using Npgsql;
 
 namespace GeneaPam.Api.IntegrationTests.Smoke;
 
-public sealed class DatabaseConfigTests(ApiFactory factory) : BaseIntegrationTest(factory)
+public sealed class DatabaseConfigTests(ApiFactory factory) : IntegrationTest(factory)
 {
     [Fact]
     public void NpgsqlDataSource_IsRegisteredAndResolvable()
@@ -26,7 +26,6 @@ public sealed class DatabaseConfigTests(ApiFactory factory) : BaseIntegrationTes
                 .WithWebHostBuilder(builder =>
                 {
                     builder.UseSetting("Database:ConnectionString", "");
-                    builder.UseSetting("SENTRY_DSN", "https://fake@sentry.io/0");
                 });
 
             _ = app.Services;
