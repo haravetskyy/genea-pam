@@ -21,7 +21,6 @@ public static class StorageExtensions
                     .WithCredentials(options.AccessKey, options.SecretKey)
                     .Build()
             );
-            services.AddSingleton<IObjectStorage, MinioObjectStorage>();
         }
 
         return services;

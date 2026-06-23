@@ -17,7 +17,6 @@ public static class MessagingExtensions
             services.AddSingleton<IConnectionMultiplexer>(_ =>
                 ConnectionMultiplexer.Connect(options.ConnectionString)
             );
-            services.AddSingleton<IMessageBroker, RedisMessageBroker>();
         }
 
         return services;
