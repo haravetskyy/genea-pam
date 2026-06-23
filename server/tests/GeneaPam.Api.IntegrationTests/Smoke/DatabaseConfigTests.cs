@@ -22,11 +22,10 @@ public sealed class DatabaseConfigTests(ApiFactory factory) : IntegrationTest(fa
     {
         var ex = Assert.Throws<InvalidOperationException>(() =>
         {
-            using var app = new WebApplicationFactory<Program>()
-                .WithWebHostBuilder(builder =>
-                {
-                    builder.UseSetting("Database:ConnectionString", "");
-                });
+            using var app = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
+            {
+                builder.UseSetting("Database:ConnectionString", "");
+            });
 
             _ = app.Services;
         });

@@ -2,7 +2,10 @@ namespace GeneaPam.Api.Infrastructure.Observability;
 
 public static class ObservabilityExtensions
 {
-    public static IWebHostBuilder AddObservability(this IWebHostBuilder builder, IConfiguration configuration)
+    public static IWebHostBuilder AddObservability(
+        this IWebHostBuilder builder,
+        IConfiguration configuration
+    )
     {
         var dsn = configuration["SENTRY_DSN"];
 
@@ -17,7 +20,8 @@ public static class ObservabilityExtensions
         }
 
         builder.ConfigureServices(services =>
-            services.AddSingleton<IObservabilityAdapter, SentryObservabilityAdapter>());
+            services.AddSingleton<IObservabilityAdapter, SentryObservabilityAdapter>()
+        );
 
         return builder;
     }

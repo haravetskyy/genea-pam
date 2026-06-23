@@ -13,24 +13,32 @@ public static class HttpExtensions
 
         services.AddOpenApi(options =>
         {
-            options.AddDocumentTransformer((doc, _, _) =>
-            {
-                doc.Info = new OpenApiInfo { Title = "GeneaPam API", Version = "v1" };
-                doc.Components ??= new OpenApiComponents();
-                doc.Components.SecuritySchemes["Bearer"] = new OpenApiSecurityScheme
+            options.AddDocumentTransformer(
+                (doc, _, _) =>
                 {
-                    Type = SecuritySchemeType.Http,
-                    Scheme = "bearer",
-                    BearerFormat = "JWT",
-                    Description = "Enter your JWT bearer token.",
-                };
-                return Task.CompletedTask;
-            });
+                    doc.Info = new OpenApiInfo { Title = "GeneaPam API", Version = "v1" };
+                    doc.Components ??= new OpenApiComponents();
+                    doc.Components.SecuritySchemes ??=
+                        new Dictionary<string, IOpenApiSecurityScheme>();
+                    doc.Components.SecuritySchemes["Bearer"] = new OpenApiSecurityScheme
+                    {
+                        Type = SecuritySchemeType.Http,
+                        Scheme = "bearer",
+                        BearerFormat = "JWT",
+                        Description = "Enter your JWT bearer token.",
+                    };
+                    return Task.CompletedTask;
+                }
+            );
         });
 
-        var endpointTypes = Assembly.GetExecutingAssembly()
+        var endpointTypes = Assembly
+            .GetExecutingAssembly()
             .GetTypes()
-            .Where(t => t is { IsAbstract: false, IsInterface: false } && t.IsAssignableTo(typeof(IEndpoint)));
+            .Where(t =>
+                t is { IsAbstract: false, IsInterface: false }
+                && t.IsAssignableTo(typeof(IEndpoint))
+            );
 
         foreach (var type in endpointTypes)
             services.AddSingleton(typeof(IEndpoint), type);

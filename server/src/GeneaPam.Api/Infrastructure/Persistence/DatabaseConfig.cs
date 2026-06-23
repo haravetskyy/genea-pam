@@ -4,7 +4,10 @@ namespace GeneaPam.Api.Infrastructure.Persistence;
 
 public static class DatabaseConfig
 {
-    public static IServiceCollection AddDatabaseConfig(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddDatabaseConfig(
+        this IServiceCollection services,
+        IConfiguration configuration
+    )
     {
         var connectionString = GetConnectionString(configuration);
 
@@ -16,7 +19,8 @@ public static class DatabaseConfig
 
     public static string GetConnectionString(IConfiguration configuration)
     {
-        var options = configuration.GetSection(DatabaseOptions.SectionName).Get<DatabaseOptions>()
+        var options =
+            configuration.GetSection(DatabaseOptions.SectionName).Get<DatabaseOptions>()
             ?? throw new InvalidOperationException("Database configuration is missing");
 
         if (string.IsNullOrWhiteSpace(options.ConnectionString))

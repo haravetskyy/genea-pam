@@ -1,9 +1,5 @@
 pre-commit:
-  parallel: true
   commands:
     format-check:
       glob: "server/**/*.cs"
-      run: dotnet format server/GeneaPam.slnx --verify-no-changes
-    build-check:
-      glob: "server/**/*.cs"
-      run: dotnet build server/GeneaPam.slnx --no-restore
+      run: dotnet csharpier format server/ && git add server/

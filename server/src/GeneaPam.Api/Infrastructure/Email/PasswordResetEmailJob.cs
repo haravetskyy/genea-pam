@@ -5,4 +5,5 @@ public sealed record PasswordResetEmailJob(
     string UserName,
     string LanguagePreference,
     string ResetLink,
-    TimeSpan Expiry) : IEmailJob;
+    TimeSpan Expiry
+) : IEmailJob;

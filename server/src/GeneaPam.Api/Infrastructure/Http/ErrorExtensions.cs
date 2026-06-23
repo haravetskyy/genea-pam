@@ -9,7 +9,10 @@ public static class ErrorExtensions
     {
         var (status, title) = error.Type switch
         {
-            ErrorType.Validation => (StatusCodes.Status400BadRequest, "Bad Request"),
+            ErrorType.Validation => (
+                StatusCodes.Status422UnprocessableEntity,
+                "Unprocessable Entity"
+            ),
             ErrorType.Unauthorized => (StatusCodes.Status401Unauthorized, "Unauthorized"),
             ErrorType.Forbidden => (StatusCodes.Status403Forbidden, "Forbidden"),
             ErrorType.NotFound => (StatusCodes.Status404NotFound, "Not Found"),
@@ -30,9 +33,16 @@ public static class ErrorExtensions
     {
         var problem = error.ToProblemDetails();
         return Results.Problem(
+            type: null,
             detail: problem.Detail,
             statusCode: problem.Status,
             title: problem.Title,
-            extensions: problem.Extensions.ToDictionary(k => k.Key, v => v.Value));
+            extensions: problem.Extensions.ToDictionary(k => k.Key, v => v.Value)
+        );
+    }
+
+    public static IResult MatchToResponse<T>(this ErrorOr<T> result, Func<T, IResult> onValue)
+    {
+        return result.Match(onValue, errors => errors[0].ToProblemResult());
     }
 }
