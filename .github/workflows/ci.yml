@@ -30,4 +30,4 @@ jobs:
         working-directory: .
 
       - name: Format check
-        run: dotnet csharpier --check .
+        run: dotnet csharpier check .
