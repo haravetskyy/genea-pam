@@ -2,4 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/GeneaPam.Api/GeneaPam.Api.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/GeneaPam.Api.IntegrationTests/GeneaPam.Api.IntegrationTests.csproj" />
+  </Folder>
 </Solution>
