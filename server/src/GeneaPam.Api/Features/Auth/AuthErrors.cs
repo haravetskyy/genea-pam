@@ -14,6 +14,11 @@ public static class AuthErrors
         description: "An account with this email address already exists."
     );
 
+    public static readonly Error EmailDisposable = Error.Validation(
+        code: "Auth.EmailDisposable",
+        description: "Disposable email addresses are not allowed."
+    );
+
     public static readonly Error PasswordTooShort = Error.Validation(
         code: "Auth.PasswordTooShort",
         description: "Password must be at least 8 characters."

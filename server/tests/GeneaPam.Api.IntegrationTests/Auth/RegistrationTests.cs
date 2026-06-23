@@ -169,7 +169,7 @@ public sealed class RegistrationTests(ApiFactory factory) : IntegrationTest(fact
         Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
 
         var problem = await response.Content.ReadFromJsonAsync<ProblemResponse>();
-        Assert.Equal("Auth.EmailInvalid", problem?.ErrorCode);
+        Assert.Equal("Auth.EmailDisposable", problem?.ErrorCode);
     }
 
     [Fact]

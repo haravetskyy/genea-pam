@@ -1,5 +1,6 @@
 using DnsClient;
 using FluentValidation;
+using Soenneker.Validators.Email.Disposable.Registrars;
 
 namespace GeneaPam.Api.Features.Auth;
 
@@ -25,6 +26,7 @@ public static class AuthExtensions
             }
         );
 
+        services.AddEmailDisposableValidatorAsSingleton();
         services.AddValidatorsFromAssemblyContaining<RegisterValidator>();
 
         return services;
