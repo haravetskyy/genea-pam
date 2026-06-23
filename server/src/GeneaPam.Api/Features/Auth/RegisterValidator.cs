@@ -72,8 +72,8 @@ public sealed class RegisterValidator : AbstractValidator<RegisterRequest>
 
         RuleFor(r => r.Password)
             .MinimumLength(8)
-            .WithErrorCode(AuthErrors.PasswordBreached.Code)
-            .WithMessage("Password must be at least 8 characters.");
+            .WithErrorCode(AuthErrors.PasswordTooShort.Code)
+            .WithMessage(AuthErrors.PasswordTooShort.Description);
 
         RuleFor(r => r.Password)
             .MustAsync(

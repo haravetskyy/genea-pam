@@ -195,6 +195,29 @@ public sealed class RegistrationTests(ApiFactory factory) : IntegrationTest(fact
     }
 
     [Fact]
+    public async Task Register_WithShortNonBreachedPassword_Returns422WithPasswordTooShort()
+    {
+        const string shortPassword = "Ab1!x";
+        StubHibpClean(shortPassword);
+        factory.DnsResolver.AllowMx("gmail.com");
+
+        var response = await Client.PostAsJsonAsync(
+            "/auth/register",
+            new
+            {
+                email = "henry@gmail.com",
+                password = shortPassword,
+                displayName = "Henry",
+            }
+        );
+
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
+
+        var problem = await response.Content.ReadFromJsonAsync<ProblemResponse>();
+        Assert.Equal("Auth.PasswordTooShort", problem?.ErrorCode);
+    }
+
+    [Fact]
     public async Task Register_WithValidInput_EnqueuesWelcomeEmailJob()
     {
         StubHibpClean(SafePassword);

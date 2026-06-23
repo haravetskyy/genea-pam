@@ -31,12 +31,19 @@ public sealed class RegisterEndpoint : IEndpoint
         var validation = await validator.ValidateAsync(request, cancellationToken);
         if (!validation.IsValid)
         {
-            var firstError = validation.Errors[0];
-            var error =
-                firstError.ErrorCode == AuthErrors.PasswordBreached.Code
-                    ? AuthErrors.PasswordBreached
-                    : AuthErrors.EmailInvalid;
-            return error.ToProblemResult();
+            var errors = validation
+                .Errors.Select(f =>
+                    f.ErrorCode switch
+                    {
+                        var c when c == AuthErrors.PasswordTooShort.Code =>
+                            AuthErrors.PasswordTooShort,
+                        var c when c == AuthErrors.PasswordBreached.Code =>
+                            AuthErrors.PasswordBreached,
+                        _ => AuthErrors.EmailInvalid,
+                    }
+                )
+                .ToList();
+            return errors.ToProblemResult();
         }
 
         var result = await RegisterUserAsync(

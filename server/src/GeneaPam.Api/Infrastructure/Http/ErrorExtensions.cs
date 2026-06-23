@@ -41,6 +41,22 @@ public static class ErrorExtensions
         );
     }
 
+    public static IResult ToProblemResult(this IReadOnlyList<Error> errors)
+    {
+        var first = errors[0];
+        var problem = first.ToProblemDetails();
+        var extensions = problem.Extensions.ToDictionary(k => k.Key, v => v.Value);
+        if (errors.Count > 1)
+            extensions["errors"] = errors.Select(e => e.Code).ToArray();
+        return Results.Problem(
+            type: null,
+            detail: problem.Detail,
+            statusCode: problem.Status,
+            title: problem.Title,
+            extensions: extensions
+        );
+    }
+
     public static IResult MatchToResponse<T>(this ErrorOr<T> result, Func<T, IResult> onValue)
     {
         return result.Match(onValue, errors => errors[0].ToProblemResult());
