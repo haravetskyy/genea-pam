@@ -8,12 +8,11 @@ public static class JobsExtensions
 {
     public static IHostBuilder AddJobs(this IHostBuilder host, IConfiguration configuration)
     {
-        var dbOptions = configuration.GetSection(DatabaseOptions.SectionName).Get<DatabaseOptions>()
-            ?? throw new InvalidOperationException("Database configuration is missing");
+        var connectionString = DatabaseConfig.GetConnectionString(configuration);
 
         host.UseWolverine(opts =>
         {
-            opts.PersistMessagesWithPostgresql(dbOptions.ConnectionString);
+            opts.PersistMessagesWithPostgresql(connectionString);
             opts.Policies.AutoApplyTransactions();
         });
 
