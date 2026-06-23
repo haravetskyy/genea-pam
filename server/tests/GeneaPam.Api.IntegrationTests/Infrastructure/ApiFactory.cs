@@ -21,7 +21,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("SENTRY_DSN", "https://fake@sentry.io/0");
         builder.UseSetting("Database:ConnectionString", _postgres.GetConnectionString());
         builder.UseSetting("Redis:ConnectionString", "localhost:6379,abortConnect=false");
-        builder.UseSetting("Storage:Endpoint", "http://localhost:9000");
+        builder.UseSetting("Storage:Endpoint", "localhost:9000");
         builder.UseSetting("Storage:AccessKey", "minioadmin");
         builder.UseSetting("Storage:SecretKey", "minioadmin");
         builder.UseSetting("Storage:BucketName", "test");
