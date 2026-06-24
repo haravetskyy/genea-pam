@@ -3,7 +3,7 @@ using GeneaPam.Api.IntegrationTests.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace GeneaPam.Api.IntegrationTests.Auth;
+namespace GeneaPam.Api.IntegrationTests.Features.Auth;
 
 public sealed class IdentitySchemaTests(ApiFactory factory) : IntegrationTest(factory)
 {
