@@ -94,6 +94,32 @@ public sealed class RefreshTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
+    public async Task Refresh_ConcurrentReplay_OnlyOneRequestSucceeds()
+    {
+        var refreshToken = await LoginAndGetRefreshTokenAsync("refresh_concurrent@gmail.com");
+
+        var task1 = Task.Run(async () =>
+        {
+            var req = new HttpRequestMessage(HttpMethod.Post, "/auth/refresh");
+            req.Headers.Add("Cookie", $"refresh_token={refreshToken}");
+            return await Client.SendAsync(req);
+        });
+
+        var task2 = Task.Run(async () =>
+        {
+            var req = new HttpRequestMessage(HttpMethod.Post, "/auth/refresh");
+            req.Headers.Add("Cookie", $"refresh_token={refreshToken}");
+            return await Client.SendAsync(req);
+        });
+
+        var responses = await Task.WhenAll(task1, task2);
+        var statusCodes = responses.Select(r => (int)r.StatusCode).ToArray();
+
+        Assert.Contains(200, statusCodes);
+        Assert.Contains(401, statusCodes);
+    }
+
+    [Fact]
     public async Task Refresh_WithMissingCookie_Returns401()
     {
         var response = await Client.PostAsync("/auth/refresh", null);

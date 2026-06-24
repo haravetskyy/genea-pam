@@ -15,7 +15,7 @@ builder.Services.AddMessaging(builder.Configuration);
 builder.Services.AddStorage(builder.Configuration);
 builder.Services.AddEmail(builder.Configuration);
 builder.Host.AddJobs(builder.Configuration);
-builder.Services.AddAuth(builder.Configuration);
+builder.Services.AddAuth(builder.Configuration, builder.Environment);
 builder.Services.AddHttpInfrastructure();
 
 var app = builder.Build();
