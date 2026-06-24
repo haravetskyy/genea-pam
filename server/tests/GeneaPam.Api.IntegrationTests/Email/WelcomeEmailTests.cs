@@ -1,4 +1,4 @@
-using GeneaPam.Api.Infrastructure.Email;
+using GeneaPam.Api.Features.Auth;
 using GeneaPam.Api.Infrastructure.Jobs;
 using Microsoft.Extensions.DependencyInjection;
 using WireMock.RequestBuilders;

@@ -1,4 +1,6 @@
-namespace GeneaPam.Api.Infrastructure.Email;
+using GeneaPam.Api.Infrastructure.Email;
+
+namespace GeneaPam.Api.Features.Auth;
 
 public sealed class WelcomeEmailHandler(EmailRenderer renderer, ResendClient resend)
 {
