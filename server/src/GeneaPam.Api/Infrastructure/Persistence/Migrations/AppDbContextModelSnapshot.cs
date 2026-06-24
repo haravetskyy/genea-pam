@@ -129,7 +129,7 @@ namespace GeneaPam.Api.Infrastructure.Persistence.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("GeneaPam.Api.Infrastructure.Persistence.RefreshToken", b =>
+            modelBuilder.Entity("GeneaPam.Api.Features.Auth.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -265,7 +265,7 @@ namespace GeneaPam.Api.Infrastructure.Persistence.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("GeneaPam.Api.Infrastructure.Persistence.RefreshToken", b =>
+            modelBuilder.Entity("GeneaPam.Api.Features.Auth.RefreshToken", b =>
                 {
                     b.HasOne("GeneaPam.Api.Infrastructure.Persistence.ApplicationUser", "User")
                         .WithMany()
