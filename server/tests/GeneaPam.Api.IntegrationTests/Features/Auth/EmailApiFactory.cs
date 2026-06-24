@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.PostgreSql;
 using WireMock.Server;
 
-namespace GeneaPam.Api.IntegrationTests.Email;
+namespace GeneaPam.Api.IntegrationTests.Features.Auth;
 
 public sealed class EmailApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {

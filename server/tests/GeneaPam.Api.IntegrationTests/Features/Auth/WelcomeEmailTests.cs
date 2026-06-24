@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
 
-namespace GeneaPam.Api.IntegrationTests.Email;
+namespace GeneaPam.Api.IntegrationTests.Features.Auth;
 
 public sealed class WelcomeEmailTests(EmailApiFactory factory) : IClassFixture<EmailApiFactory>
 {

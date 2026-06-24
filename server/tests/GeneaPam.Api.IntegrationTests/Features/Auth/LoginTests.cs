@@ -7,7 +7,7 @@ using GeneaPam.Api.IntegrationTests.Infrastructure;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
 
-namespace GeneaPam.Api.IntegrationTests.Auth;
+namespace GeneaPam.Api.IntegrationTests.Features.Auth;
 
 public sealed class LoginTests(ApiFactory factory) : IntegrationTest(factory)
 {
