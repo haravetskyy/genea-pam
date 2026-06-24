@@ -3,7 +3,6 @@ using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text;
 using GeneaPam.Api.Features.Auth;
-using GeneaPam.Api.Infrastructure.Email;
 using GeneaPam.Api.Infrastructure.Jobs;
 using GeneaPam.Api.IntegrationTests.Infrastructure;
 using GeneaPam.Api.UnitTests.Infrastructure.Adapters;

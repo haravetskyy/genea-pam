@@ -1,5 +1,4 @@
 using ErrorOr;
-using GeneaPam.Api.Infrastructure.Email;
 using GeneaPam.Api.Infrastructure.Http;
 using GeneaPam.Api.Infrastructure.Jobs;
 using GeneaPam.Api.Infrastructure.Persistence;

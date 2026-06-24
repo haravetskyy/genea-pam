@@ -1,4 +1,4 @@
-namespace GeneaPam.Api.Infrastructure.Email;
+namespace GeneaPam.Api.Features.Auth;
 
 public sealed record WelcomeEmailModel(string UserName);
 
