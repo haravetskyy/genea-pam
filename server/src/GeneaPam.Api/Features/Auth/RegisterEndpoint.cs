@@ -1,5 +1,4 @@
 using ErrorOr;
-using FluentValidation;
 using GeneaPam.Api.Infrastructure.Email;
 using GeneaPam.Api.Infrastructure.Http;
 using GeneaPam.Api.Infrastructure.Jobs;
@@ -22,31 +21,15 @@ public sealed class RegisterEndpoint : IEndpoint
 
     internal static async Task<IResult> HandleAsync(
         RegisterRequest request,
-        IValidator<RegisterRequest> validator,
+        RegisterValidator validator,
         UserManager<ApplicationUser> userManager,
         IJobDispatcher jobDispatcher,
         CancellationToken cancellationToken
     )
     {
-        var validation = await validator.ValidateAsync(request, cancellationToken);
-        if (!validation.IsValid)
-        {
-            var errors = validation
-                .Errors.Select(f =>
-                    f.ErrorCode switch
-                    {
-                        var c when c == AuthErrors.PasswordTooShort.Code =>
-                            AuthErrors.PasswordTooShort,
-                        var c when c == AuthErrors.PasswordBreached.Code =>
-                            AuthErrors.PasswordBreached,
-                        var c when c == AuthErrors.EmailDisposable.Code =>
-                            AuthErrors.EmailDisposable,
-                        _ => AuthErrors.EmailInvalid,
-                    }
-                )
-                .ToList();
-            return errors.ToProblemResult();
-        }
+        var validated = await validator.ValidateToErrorOrAsync(request, cancellationToken);
+        if (validated.IsError)
+            return validated.Errors.ToProblemResult();
 
         var result = await RegisterUserAsync(
             request,
