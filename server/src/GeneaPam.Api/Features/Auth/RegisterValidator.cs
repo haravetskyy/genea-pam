@@ -1,6 +1,7 @@
 using System.Net.Mail;
 using System.Security.Cryptography;
 using System.Text;
+using ErrorOr;
 using FluentValidation;
 using Soenneker.Validators.Email.Disposable.Abstract;
 
@@ -35,6 +36,31 @@ public sealed class RegisterValidator : AbstractValidator<RegisterRequest>
             )
             .WithErrorCode(AuthErrors.PasswordBreached.Code)
             .WithMessage(AuthErrors.PasswordBreached.Description);
+    }
+
+    public async Task<ErrorOr<RegisterRequest>> ValidateToErrorOrAsync(
+        RegisterRequest request,
+        CancellationToken cancellationToken
+    )
+    {
+        var result = await this.ValidateAsync(request, cancellationToken);
+        if (result.IsValid)
+            return request;
+
+        var errors = result
+            .Errors.Select(f =>
+                f.ErrorCode switch
+                {
+                    var c when c == AuthErrors.PasswordTooShort.Code => AuthErrors.PasswordTooShort,
+                    var c when c == AuthErrors.PasswordBreached.Code => AuthErrors.PasswordBreached,
+                    var c when c == AuthErrors.EmailDisposable.Code => AuthErrors.EmailDisposable,
+                    _ => AuthErrors.EmailInvalid,
+                }
+            )
+            .Distinct()
+            .ToList();
+
+        return errors;
     }
 
     private static async Task<bool> IsValidEmailWithMxAsync(
