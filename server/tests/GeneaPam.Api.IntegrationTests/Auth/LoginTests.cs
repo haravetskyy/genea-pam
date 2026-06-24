@@ -70,6 +70,50 @@ public sealed class LoginTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
+    public async Task Login_RefreshCookie_HasSecureFlag()
+    {
+        await RegisterUserAsync("login_secure_flag@gmail.com");
+
+        var response = await Client.PostAsJsonAsync(
+            "/auth/login",
+            new { email = "login_secure_flag@gmail.com", password = SafePassword }
+        );
+
+        var setCookie = response.Headers.GetValues("Set-Cookie").FirstOrDefault();
+        Assert.NotNull(setCookie);
+        Assert.Contains("secure", setCookie, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Login_RefreshCookie_ExpiryMatchesConfig()
+    {
+        await RegisterUserAsync("login_cookie_expiry@gmail.com");
+
+        var before = DateTimeOffset.UtcNow;
+        var response = await Client.PostAsJsonAsync(
+            "/auth/login",
+            new { email = "login_cookie_expiry@gmail.com", password = SafePassword }
+        );
+        var after = DateTimeOffset.UtcNow;
+
+        var setCookie = response.Headers.GetValues("Set-Cookie").FirstOrDefault();
+        Assert.NotNull(setCookie);
+
+        var expiresPart = setCookie
+            .Split(';')
+            .Select(p => p.Trim())
+            .FirstOrDefault(p => p.StartsWith("expires=", StringComparison.OrdinalIgnoreCase));
+        Assert.NotNull(expiresPart);
+
+        var expiresValue = expiresPart["expires=".Length..];
+        var cookieExpiry = DateTimeOffset.Parse(expiresValue);
+
+        // Default RefreshTokenExpiryDays is 30
+        Assert.True(cookieExpiry >= before.AddDays(30).AddSeconds(-5));
+        Assert.True(cookieExpiry <= after.AddDays(30).AddSeconds(5));
+    }
+
+    [Fact]
     public async Task Login_WithWrongPassword_Returns401WithInvalidCredentials()
     {
         await RegisterUserAsync("login_wrongpwd@gmail.com");

@@ -1,5 +1,6 @@
 using ErrorOr;
 using GeneaPam.Api.Infrastructure.Http;
+using Microsoft.Extensions.Options;
 
 namespace GeneaPam.Api.Features.Auth;
 
@@ -18,6 +19,7 @@ public sealed class RefreshEndpoint : IEndpoint
         HttpContext httpContext,
         ITokenIssuer tokenIssuer,
         IRefreshTokenStore refreshStore,
+        IOptions<AuthOptions> authOptions,
         CancellationToken cancellationToken
     )
     {
@@ -29,7 +31,11 @@ public sealed class RefreshEndpoint : IEndpoint
 
         return result.MatchToResponse(response =>
         {
-            AuthCookies.Append(httpContext, response.RefreshToken);
+            AuthCookies.Append(
+                httpContext,
+                response.RefreshToken,
+                authOptions.Value.RefreshTokenExpiryDays
+            );
             return Results.Ok(new LoginResponse(response.AccessToken));
         });
     }

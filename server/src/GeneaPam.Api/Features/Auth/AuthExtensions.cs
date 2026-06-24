@@ -12,8 +12,12 @@ public static class AuthExtensions
 {
     public static IServiceCollection AddAuth(
         this IServiceCollection services,
-        IConfiguration configuration
-    ) => services.AddAuthValidation(configuration).AddAuthTokens(configuration);
+        IConfiguration configuration,
+        IHostEnvironment environment
+    ) =>
+        services
+            .AddAuthValidation(configuration)
+            .AddAuthTokens(configuration, isProduction: !environment.IsDevelopment());
 
     public static IServiceCollection AddAuthValidation(
         this IServiceCollection services,
@@ -44,17 +48,28 @@ public static class AuthExtensions
 
     public static IServiceCollection AddAuthTokens(
         this IServiceCollection services,
-        IConfiguration configuration
+        IConfiguration configuration,
+        bool isProduction = false
     )
     {
         services.Configure<AuthOptions>(configuration.GetSection(AuthOptions.SectionName));
 
         services.AddScoped<ITokenIssuer, JwtTokenIssuer>();
         services.AddScoped<IRefreshTokenStore, DbRefreshTokenStore>();
+        services.AddScoped<RefreshTokenCleanupJob>();
+        services.AddHostedService<RefreshTokenCleanupService>();
 
         var authOptions =
             configuration.GetSection(AuthOptions.SectionName).Get<AuthOptions>()
             ?? new AuthOptions();
+
+        if (
+            isProduction
+            && (string.IsNullOrEmpty(authOptions.JwtSecret) || authOptions.JwtSecret.Length < 32)
+        )
+            throw new InvalidOperationException(
+                "Auth:JwtSecret must be at least 32 characters in non-Development environments."
+            );
 
         var jwtKey = string.IsNullOrEmpty(authOptions.JwtSecret)
             ? new string('x', 32)

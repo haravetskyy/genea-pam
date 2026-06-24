@@ -39,17 +39,20 @@ public sealed class DbRefreshTokenStore(
     )
     {
         var hash = HashToken(rawToken);
+        var now = DateTimeOffset.UtcNow;
+
+        var rowsAffected = await db
+            .RefreshTokens.Where(t => t.TokenHash == hash && !t.IsUsed && t.ExpiresAt > now)
+            .ExecuteUpdateAsync(s => s.SetProperty(t => t.IsUsed, true), cancellationToken);
+
+        if (rowsAffected == 0)
+            return null;
+
         var stored = await db
             .RefreshTokens.Where(t => t.TokenHash == hash)
             .FirstOrDefaultAsync(cancellationToken);
 
-        if (stored is null || stored.IsUsed || stored.ExpiresAt <= DateTimeOffset.UtcNow)
-            return null;
-
-        stored.IsUsed = true;
-        await db.SaveChangesAsync(cancellationToken);
-
-        return await userManager.FindByIdAsync(stored.UserId);
+        return stored is null ? null : await userManager.FindByIdAsync(stored.UserId);
     }
 
     public async Task RevokeAsync(string rawToken, CancellationToken cancellationToken)

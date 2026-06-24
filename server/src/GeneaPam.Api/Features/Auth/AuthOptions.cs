@@ -9,4 +9,5 @@ public class AuthOptions
     public string JwtSecret { get; init; } = string.Empty;
     public int JwtExpiryMinutes { get; init; } = 15;
     public int RefreshTokenExpiryDays { get; init; } = 30;
+    public int CleanupIntervalHours { get; init; } = 24;
 }
