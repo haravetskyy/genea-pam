@@ -16,14 +16,14 @@ public sealed class LogoutEndpoint : IEndpoint
 
     internal static async Task<IResult> HandleAsync(
         HttpContext httpContext,
-        JwtTokenService tokenService,
+        IRefreshTokenStore refreshStore,
         CancellationToken cancellationToken
     )
     {
         var rawToken = httpContext.Request.Cookies[RefreshCookieName];
 
         if (!string.IsNullOrEmpty(rawToken))
-            await tokenService.RevokeRefreshTokenAsync(rawToken, cancellationToken);
+            await refreshStore.RevokeAsync(rawToken, cancellationToken);
 
         httpContext.Response.Cookies.Delete(RefreshCookieName);
 

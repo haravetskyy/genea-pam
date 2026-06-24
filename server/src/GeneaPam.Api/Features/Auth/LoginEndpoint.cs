@@ -21,12 +21,19 @@ public sealed class LoginEndpoint : IEndpoint
     internal static async Task<IResult> HandleAsync(
         LoginRequest request,
         UserManager<ApplicationUser> userManager,
-        JwtTokenService tokenService,
+        ITokenIssuer tokenIssuer,
+        IRefreshTokenStore refreshStore,
         HttpContext httpContext,
         CancellationToken cancellationToken
     )
     {
-        var result = await AuthenticateAsync(request, userManager, tokenService, cancellationToken);
+        var result = await AuthenticateAsync(
+            request,
+            userManager,
+            tokenIssuer,
+            refreshStore,
+            cancellationToken
+        );
 
         return result.MatchToResponse(response =>
         {
@@ -47,7 +54,8 @@ public sealed class LoginEndpoint : IEndpoint
     private static async Task<ErrorOr<(string AccessToken, string RefreshToken)>> AuthenticateAsync(
         LoginRequest request,
         UserManager<ApplicationUser> userManager,
-        JwtTokenService tokenService,
+        ITokenIssuer tokenIssuer,
+        IRefreshTokenStore refreshStore,
         CancellationToken cancellationToken
     )
     {
@@ -59,8 +67,8 @@ public sealed class LoginEndpoint : IEndpoint
         if (!valid)
             return AuthErrors.InvalidCredentials;
 
-        var accessToken = tokenService.CreateAccessToken(user);
-        var refreshToken = await tokenService.CreateRefreshTokenAsync(user, cancellationToken);
+        var accessToken = tokenIssuer.CreateAccessToken(user);
+        var refreshToken = await refreshStore.CreateAsync(user, cancellationToken);
 
         return (accessToken, refreshToken);
     }

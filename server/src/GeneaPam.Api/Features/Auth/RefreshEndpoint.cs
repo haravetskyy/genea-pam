@@ -18,7 +18,8 @@ public sealed class RefreshEndpoint : IEndpoint
 
     internal static async Task<IResult> HandleAsync(
         HttpContext httpContext,
-        JwtTokenService tokenService,
+        ITokenIssuer tokenIssuer,
+        IRefreshTokenStore refreshStore,
         CancellationToken cancellationToken
     )
     {
@@ -26,7 +27,7 @@ public sealed class RefreshEndpoint : IEndpoint
         if (string.IsNullOrEmpty(rawToken))
             return AuthErrors.TokenInvalid.ToProblemResult();
 
-        var result = await RotateTokenAsync(rawToken, httpContext, tokenService, cancellationToken);
+        var result = await RotateTokenAsync(rawToken, tokenIssuer, refreshStore, cancellationToken);
 
         return result.MatchToResponse(response =>
         {
@@ -46,17 +47,17 @@ public sealed class RefreshEndpoint : IEndpoint
 
     private static async Task<ErrorOr<(string AccessToken, string RefreshToken)>> RotateTokenAsync(
         string rawToken,
-        HttpContext httpContext,
-        JwtTokenService tokenService,
+        ITokenIssuer tokenIssuer,
+        IRefreshTokenStore refreshStore,
         CancellationToken cancellationToken
     )
     {
-        var user = await tokenService.ValidateRefreshTokenAsync(rawToken, cancellationToken);
+        var user = await refreshStore.ValidateAndRotateAsync(rawToken, cancellationToken);
         if (user is null)
             return AuthErrors.TokenInvalid;
 
-        var accessToken = tokenService.CreateAccessToken(user);
-        var newRefreshToken = await tokenService.CreateRefreshTokenAsync(user, cancellationToken);
+        var accessToken = tokenIssuer.CreateAccessToken(user);
+        var newRefreshToken = await refreshStore.CreateAsync(user, cancellationToken);
 
         return (accessToken, newRefreshToken);
     }
