@@ -25,6 +25,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     {
         builder.UseSetting("Database:ConnectionString", _postgres.GetConnectionString());
         builder.UseSetting("Auth:HibpBaseUrl", WireMock.Url!);
+        builder.UseSetting("Auth:JwtSecret", "test-secret-key-that-is-at-least-32-chars!!");
 
         builder.ConfigureServices(services =>
         {

@@ -21,17 +21,9 @@ builder.Services.AddHttpInfrastructure();
 var app = builder.Build();
 
 app.UseHttpInfrastructure();
-app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapEndpoints();
-
-if (!app.Environment.IsProduction())
-    app.MapGet(
-        "/test/throw",
-        () =>
-        {
-            throw new InvalidOperationException("test exception");
-        }
-    );
 
 app.Run();
 
