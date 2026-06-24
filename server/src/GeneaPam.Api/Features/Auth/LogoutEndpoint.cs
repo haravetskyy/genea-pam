@@ -4,8 +4,6 @@ namespace GeneaPam.Api.Features.Auth;
 
 public sealed class LogoutEndpoint : IEndpoint
 {
-    private const string RefreshCookieName = "refresh_token";
-
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPost("/auth/logout", HandleAsync)
@@ -20,12 +18,12 @@ public sealed class LogoutEndpoint : IEndpoint
         CancellationToken cancellationToken
     )
     {
-        var rawToken = httpContext.Request.Cookies[RefreshCookieName];
+        var rawToken = AuthCookies.Read(httpContext);
 
         if (!string.IsNullOrEmpty(rawToken))
             await refreshStore.RevokeAsync(rawToken, cancellationToken);
 
-        httpContext.Response.Cookies.Delete(RefreshCookieName);
+        AuthCookies.Delete(httpContext);
 
         return Results.NoContent();
     }

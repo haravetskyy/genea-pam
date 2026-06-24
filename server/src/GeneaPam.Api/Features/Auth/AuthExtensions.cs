@@ -13,6 +13,11 @@ public static class AuthExtensions
     public static IServiceCollection AddAuth(
         this IServiceCollection services,
         IConfiguration configuration
+    ) => services.AddAuthValidation(configuration).AddAuthTokens(configuration);
+
+    public static IServiceCollection AddAuthValidation(
+        this IServiceCollection services,
+        IConfiguration configuration
     )
     {
         services.AddSingleton<ILookupClient>(_ => new LookupClient());
@@ -21,8 +26,6 @@ public static class AuthExtensions
         var authOptions =
             configuration.GetSection(AuthOptions.SectionName).Get<AuthOptions>()
             ?? new AuthOptions();
-
-        services.Configure<AuthOptions>(configuration.GetSection(AuthOptions.SectionName));
 
         services.AddHttpClient(
             "hibp",
@@ -36,8 +39,22 @@ public static class AuthExtensions
         services.AddEmailDisposableValidatorAsSingleton();
         services.AddValidatorsFromAssemblyContaining<RegisterValidator>();
 
+        return services;
+    }
+
+    public static IServiceCollection AddAuthTokens(
+        this IServiceCollection services,
+        IConfiguration configuration
+    )
+    {
+        services.Configure<AuthOptions>(configuration.GetSection(AuthOptions.SectionName));
+
         services.AddScoped<ITokenIssuer, JwtTokenIssuer>();
         services.AddScoped<IRefreshTokenStore, DbRefreshTokenStore>();
+
+        var authOptions =
+            configuration.GetSection(AuthOptions.SectionName).Get<AuthOptions>()
+            ?? new AuthOptions();
 
         var jwtKey = string.IsNullOrEmpty(authOptions.JwtSecret)
             ? new string('x', 32)

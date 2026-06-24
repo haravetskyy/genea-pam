@@ -7,8 +7,6 @@ namespace GeneaPam.Api.Features.Auth;
 
 public sealed class LoginEndpoint : IEndpoint
 {
-    private const string RefreshCookieName = "refresh_token";
-
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPost("/auth/login", HandleAsync)
@@ -37,16 +35,7 @@ public sealed class LoginEndpoint : IEndpoint
 
         return result.MatchToResponse(response =>
         {
-            httpContext.Response.Cookies.Append(
-                RefreshCookieName,
-                response.RefreshToken,
-                new CookieOptions
-                {
-                    HttpOnly = true,
-                    SameSite = SameSiteMode.Strict,
-                    Expires = DateTimeOffset.UtcNow.AddDays(30),
-                }
-            );
+            AuthCookies.Append(httpContext, response.RefreshToken);
             return Results.Ok(new LoginResponse(response.AccessToken));
         });
     }
