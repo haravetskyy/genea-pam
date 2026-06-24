@@ -1,5 +1,9 @@
+using System.Text;
 using DnsClient;
 using FluentValidation;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using Soenneker.Validators.Email.Disposable.Registrars;
 
 namespace GeneaPam.Api.Features.Auth;
@@ -7,6 +11,11 @@ namespace GeneaPam.Api.Features.Auth;
 public static class AuthExtensions
 {
     public static IServiceCollection AddAuth(
+        this IServiceCollection services,
+        IConfiguration configuration
+    ) => services.AddAuthValidation(configuration).AddAuthTokens(configuration);
+
+    public static IServiceCollection AddAuthValidation(
         this IServiceCollection services,
         IConfiguration configuration
     )
@@ -17,6 +26,7 @@ public static class AuthExtensions
         var authOptions =
             configuration.GetSection(AuthOptions.SectionName).Get<AuthOptions>()
             ?? new AuthOptions();
+
         services.AddHttpClient(
             "hibp",
             client =>
@@ -28,6 +38,42 @@ public static class AuthExtensions
 
         services.AddEmailDisposableValidatorAsSingleton();
         services.AddValidatorsFromAssemblyContaining<RegisterValidator>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddAuthTokens(
+        this IServiceCollection services,
+        IConfiguration configuration
+    )
+    {
+        services.Configure<AuthOptions>(configuration.GetSection(AuthOptions.SectionName));
+
+        services.AddScoped<ITokenIssuer, JwtTokenIssuer>();
+        services.AddScoped<IRefreshTokenStore, DbRefreshTokenStore>();
+
+        var authOptions =
+            configuration.GetSection(AuthOptions.SectionName).Get<AuthOptions>()
+            ?? new AuthOptions();
+
+        var jwtKey = string.IsNullOrEmpty(authOptions.JwtSecret)
+            ? new string('x', 32)
+            : authOptions.JwtSecret;
+
+        services
+            .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(o =>
+            {
+                o.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                    ClockSkew = TimeSpan.Zero,
+                };
+            });
+        services.AddAuthorization();
 
         return services;
     }
