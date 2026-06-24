@@ -1,50 +1,23 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using GeneaPam.Api.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 
 namespace GeneaPam.Api.Features.Auth;
 
-public sealed class JwtTokenService(
+public sealed class DbRefreshTokenStore(
     IOptions<AuthOptions> options,
     AppDbContext db,
     UserManager<ApplicationUser> userManager
-)
+) : IRefreshTokenStore
 {
     private readonly AuthOptions _options = options.Value;
 
-    public string CreateAccessToken(ApplicationUser user)
+    public async Task<string> CreateAsync(ApplicationUser user, CancellationToken cancellationToken)
     {
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.JwtSecret));
-        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-        var claims = new[]
-        {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id),
-            new Claim(JwtRegisteredClaimNames.Email, user.Email!),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-        };
-
-        var token = new JwtSecurityToken(
-            claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(_options.JwtExpiryMinutes),
-            signingCredentials: credentials
-        );
-
-        return new JwtSecurityTokenHandler().WriteToken(token);
-    }
-
-    public async Task<string> CreateRefreshTokenAsync(
-        ApplicationUser user,
-        CancellationToken cancellationToken
-    )
-    {
-        var rawToken = GenerateRawToken();
+        var rawToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
         var hash = HashToken(rawToken);
 
         db.RefreshTokens.Add(
@@ -60,7 +33,7 @@ public sealed class JwtTokenService(
         return rawToken;
     }
 
-    public async Task<ApplicationUser?> ValidateRefreshTokenAsync(
+    public async Task<ApplicationUser?> ValidateAndRotateAsync(
         string rawToken,
         CancellationToken cancellationToken
     )
@@ -79,7 +52,7 @@ public sealed class JwtTokenService(
         return await userManager.FindByIdAsync(stored.UserId);
     }
 
-    public async Task RevokeRefreshTokenAsync(string rawToken, CancellationToken cancellationToken)
+    public async Task RevokeAsync(string rawToken, CancellationToken cancellationToken)
     {
         var hash = HashToken(rawToken);
         var stored = await db
@@ -92,9 +65,6 @@ public sealed class JwtTokenService(
         stored.IsUsed = true;
         await db.SaveChangesAsync(cancellationToken);
     }
-
-    private static string GenerateRawToken() =>
-        Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
 
     private static string HashToken(string token)
     {

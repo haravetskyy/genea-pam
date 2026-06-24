@@ -36,7 +36,8 @@ public static class AuthExtensions
         services.AddEmailDisposableValidatorAsSingleton();
         services.AddValidatorsFromAssemblyContaining<RegisterValidator>();
 
-        services.AddScoped<JwtTokenService>();
+        services.AddScoped<ITokenIssuer, JwtTokenIssuer>();
+        services.AddScoped<IRefreshTokenStore, DbRefreshTokenStore>();
 
         var jwtKey = string.IsNullOrEmpty(authOptions.JwtSecret)
             ? new string('x', 32)
