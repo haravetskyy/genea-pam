@@ -28,4 +28,14 @@ public static class AuthErrors
         code: "Auth.PasswordBreached",
         description: "This password has appeared in a data breach. Please choose a different password."
     );
+
+    public static readonly Error InvalidCredentials = Error.Unauthorized(
+        code: "Auth.InvalidCredentials",
+        description: "Invalid email or password."
+    );
+
+    public static readonly Error TokenInvalid = Error.Unauthorized(
+        code: "Auth.TokenInvalid",
+        description: "The refresh token is invalid or has expired."
+    );
 }
