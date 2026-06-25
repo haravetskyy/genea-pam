@@ -1,5 +1,4 @@
 using System.Reflection;
-using Microsoft.OpenApi;
 using Scalar.AspNetCore;
 
 namespace GeneaPam.Api.Infrastructure.Http;
@@ -10,27 +9,6 @@ public static class HttpExtensions
     {
         services.AddProblemDetails();
         services.AddExceptionHandler<GlobalExceptionHandler>();
-
-        services.AddOpenApi(options =>
-        {
-            options.AddDocumentTransformer(
-                (doc, _, _) =>
-                {
-                    doc.Info = new OpenApiInfo { Title = "GeneaPam API", Version = "v1" };
-                    doc.Components ??= new OpenApiComponents();
-                    doc.Components.SecuritySchemes ??=
-                        new Dictionary<string, IOpenApiSecurityScheme>();
-                    doc.Components.SecuritySchemes["Bearer"] = new OpenApiSecurityScheme
-                    {
-                        Type = SecuritySchemeType.Http,
-                        Scheme = "bearer",
-                        BearerFormat = "JWT",
-                        Description = "Enter your JWT bearer token.",
-                    };
-                    return Task.CompletedTask;
-                }
-            );
-        });
 
         var endpointTypes = Assembly
             .GetExecutingAssembly()
@@ -49,7 +27,6 @@ public static class HttpExtensions
     public static WebApplication UseHttpInfrastructure(this WebApplication app)
     {
         app.UseExceptionHandler();
-        app.MapOpenApi();
         app.MapScalarApiReference(options =>
         {
             options.WithTitle("GeneaPam API");
