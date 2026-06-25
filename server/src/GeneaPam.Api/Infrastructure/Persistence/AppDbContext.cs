@@ -1,4 +1,3 @@
-using GeneaPam.Api.Features.Auth;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 

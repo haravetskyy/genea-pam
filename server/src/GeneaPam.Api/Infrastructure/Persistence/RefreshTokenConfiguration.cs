@@ -1,8 +1,7 @@
-using GeneaPam.Api.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace GeneaPam.Api.Features.Auth;
+namespace GeneaPam.Api.Infrastructure.Persistence;
 
 public sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
 {
