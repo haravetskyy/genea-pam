@@ -1,5 +1,5 @@
 using System.Text;
-using GeneaPam.Api.Features.Auth;
+using GeneaPam.Api.Features.Auth.Internal;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
