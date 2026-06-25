@@ -10,7 +10,7 @@ public sealed class RefreshEndpoint(
     ITokenIssuer tokenIssuer,
     IRefreshTokenStore refreshStore,
     IOptions<AuthOptions> authOptions
-) : EndpointWithoutRequest<ErrorOr<LoginResponse>>
+) : Endpoint<EmptyRequest, ErrorOr<LoginResponse>>
 {
     public override void Configure()
     {
@@ -23,7 +23,7 @@ public sealed class RefreshEndpoint(
         );
     }
 
-    public override async Task HandleAsync(CancellationToken ct)
+    public override async Task HandleAsync(EmptyRequest req, CancellationToken ct)
     {
         var rawToken = AuthCookies.Read(HttpContext);
         if (string.IsNullOrEmpty(rawToken))
