@@ -15,13 +15,14 @@
   <ItemGroup>
     <PackageReference Include="DnsClient" Version="1.8.0" />
     <PackageReference Include="ErrorOr" Version="2.1.1" />
-    <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.1" />
+    <PackageReference Include="FastEndpoints" Version="8.2.0" />
+    <PackageReference Include="FastEndpoints.Swagger" Version="8.2.0" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.9" />
     <PackageReference
       Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore"
       Version="10.0.9"
     />
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.9" />
     <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic.Workspaces" Version="5.0.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
@@ -38,7 +39,7 @@
     <PackageReference Include="Sentry.AspNetCore" Version="6.6.0" />
     <PackageReference Include="Soenneker.Validators.Email.Disposable" Version="4.0.4431" />
     <PackageReference Include="StackExchange.Redis" Version="3.0.0" />
-    <PackageReference Include="WolverineFx" Version="3.10.0" />
-    <PackageReference Include="WolverineFx.Postgresql" Version="3.10.0" />
+    <PackageReference Include="WolverineFx" Version="5.39.5" />
+    <PackageReference Include="WolverineFx.Postgresql" Version="5.39.5" />
   </ItemGroup>
 </Project>
