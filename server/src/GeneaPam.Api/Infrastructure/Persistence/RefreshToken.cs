@@ -1,6 +1,4 @@
-using GeneaPam.Api.Infrastructure.Persistence;
-
-namespace GeneaPam.Api.Features.Auth;
+namespace GeneaPam.Api.Infrastructure.Persistence;
 
 public class RefreshToken
 {
