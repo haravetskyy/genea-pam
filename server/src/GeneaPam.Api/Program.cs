@@ -1,3 +1,4 @@
+using ErrorOr;
 using FastEndpoints;
 using FastEndpoints.Swagger;
 using GeneaPam.Api.Features.Auth;
@@ -47,7 +48,30 @@ builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 
-app.UseFastEndpoints();
+app.UseFastEndpoints(c =>
+{
+    c.Endpoints.Configurator = ep =>
+    {
+        if (ep.ResDtoType.IsAssignableTo(typeof(IErrorOr)))
+        {
+            ep.DontAutoSendResponse();
+            ep.PostProcessor<ResponseSender>(Order.After);
+        }
+    };
+    c.Errors.ResponseBuilder = (failures, _, _) =>
+    {
+        var first = failures.First();
+        var code = first.ErrorCode ?? first.PropertyName;
+        return new Microsoft.AspNetCore.Mvc.ProblemDetails
+        {
+            Status = StatusCodes.Status422UnprocessableEntity,
+            Title = "Unprocessable Entity",
+            Detail = first.ErrorMessage,
+            Extensions = { ["errorCode"] = code },
+        };
+    };
+    c.Errors.ProducesMetadataType = null;
+});
 app.UseOpenApi();
 app.MapScalarApiReference(options =>
 {
