@@ -1,4 +1,5 @@
 using ErrorOr;
+using FastEndpoints;
 using GeneaPam.Api.Features.Auth.Internal;
 using GeneaPam.Api.Features.Auth.Login;
 using GeneaPam.Api.Infrastructure.Http;
@@ -6,46 +7,49 @@ using Microsoft.Extensions.Options;
 
 namespace GeneaPam.Api.Features.Auth.Refresh;
 
-public sealed class RefreshEndpoint : IEndpoint
+public sealed class RefreshEndpoint(
+    ITokenIssuer tokenIssuer,
+    IRefreshTokenStore refreshStore,
+    IOptions<AuthOptions> authOptions
+) : EndpointWithoutRequest<LoginResponse>
 {
-    public void MapEndpoints(IEndpointRouteBuilder app)
+    public override void Configure()
     {
-        app.MapPost("/auth/refresh", HandleAsync)
-            .AllowAnonymous()
-            .WithTags("Auth")
-            .Produces<LoginResponse>(StatusCodes.Status200OK)
-            .ProducesProblem(StatusCodes.Status401Unauthorized);
+        Post("/auth/refresh");
+        AllowAnonymous();
+        Tags("Auth");
+        Description(b =>
+            b.Produces<LoginResponse>(StatusCodes.Status200OK)
+                .ProducesProblem(StatusCodes.Status401Unauthorized)
+        );
     }
 
-    internal static async Task<IResult> HandleAsync(
-        HttpContext httpContext,
-        ITokenIssuer tokenIssuer,
-        IRefreshTokenStore refreshStore,
-        IOptions<AuthOptions> authOptions,
-        CancellationToken cancellationToken
-    )
+    public override async Task HandleAsync(CancellationToken ct)
     {
-        var rawToken = AuthCookies.Read(httpContext);
+        var rawToken = AuthCookies.Read(HttpContext);
         if (string.IsNullOrEmpty(rawToken))
-            return AuthErrors.TokenInvalid.ToProblemResult();
-
-        var result = await RotateTokenAsync(rawToken, tokenIssuer, refreshStore, cancellationToken);
-
-        return result.MatchToResponse(response =>
         {
-            AuthCookies.Append(
-                httpContext,
-                response.RefreshToken,
-                authOptions.Value.RefreshTokenExpiryDays
-            );
-            return Results.Ok(new LoginResponse(response.AccessToken));
-        });
+            await HttpContext.Response.SendResultAsync(AuthErrors.TokenInvalid.ToProblemResult());
+            return;
+        }
+
+        var result = await RotateTokenAsync(rawToken, ct);
+
+        await HttpContext.Response.SendResultAsync(
+            result.MatchToResponse(tokens =>
+            {
+                AuthCookies.Append(
+                    HttpContext,
+                    tokens.RefreshToken,
+                    authOptions.Value.RefreshTokenExpiryDays
+                );
+                return Results.Ok(new LoginResponse(tokens.AccessToken));
+            })
+        );
     }
 
-    private static async Task<ErrorOr<(string AccessToken, string RefreshToken)>> RotateTokenAsync(
+    private async Task<ErrorOr<(string AccessToken, string RefreshToken)>> RotateTokenAsync(
         string rawToken,
-        ITokenIssuer tokenIssuer,
-        IRefreshTokenStore refreshStore,
         CancellationToken cancellationToken
     )
     {
