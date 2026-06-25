@@ -1,5 +1,3 @@
-using GeneaPam.Api.Infrastructure.Email;
-
 namespace GeneaPam.Api.Features.Auth;
 
 public sealed record PasswordResetEmailJob(
@@ -8,4 +6,4 @@ public sealed record PasswordResetEmailJob(
     string LanguagePreference,
     string ResetLink,
     TimeSpan Expiry
-) : IEmailJob;
+);
