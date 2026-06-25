@@ -8,6 +8,7 @@ public static class HttpExtensions
 {
     public static IServiceCollection AddHttpInfrastructure(this IServiceCollection services)
     {
+        services.AddHttpContextAccessor();
         services.AddProblemDetails();
         services.AddExceptionHandler<GlobalExceptionHandler>();
 
