@@ -1,4 +1,4 @@
-using GeneaPam.Api.Features.Auth.Internal;
+using GeneaPam.Api.Features.Auth.Register;
 using GeneaPam.Api.Infrastructure.Jobs;
 using GeneaPam.Api.Infrastructure.Persistence;
 using GeneaPam.Api.IntegrationTests.Infrastructure.Adapters;

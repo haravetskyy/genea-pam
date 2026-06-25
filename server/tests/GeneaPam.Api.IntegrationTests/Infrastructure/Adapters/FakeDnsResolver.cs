@@ -1,4 +1,4 @@
-using GeneaPam.Api.Features.Auth.Internal;
+using GeneaPam.Api.Features.Auth.Register;
 
 namespace GeneaPam.Api.IntegrationTests.Infrastructure.Adapters;
 

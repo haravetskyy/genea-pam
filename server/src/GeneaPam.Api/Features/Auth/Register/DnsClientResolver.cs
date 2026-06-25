@@ -1,6 +1,6 @@
 using DnsClient;
 
-namespace GeneaPam.Api.Features.Auth.Internal;
+namespace GeneaPam.Api.Features.Auth.Register;
 
 public sealed class DnsClientResolver(ILookupClient lookupClient) : IDnsResolver
 {

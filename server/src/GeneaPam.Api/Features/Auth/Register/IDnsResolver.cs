@@ -1,4 +1,4 @@
-namespace GeneaPam.Api.Features.Auth.Internal;
+namespace GeneaPam.Api.Features.Auth.Register;
 
 public interface IDnsResolver
 {
