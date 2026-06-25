@@ -1,7 +1,6 @@
 using ErrorOr;
 using FastEndpoints;
 using GeneaPam.Api.Features.Auth.Internal;
-using GeneaPam.Api.Infrastructure.Http;
 using GeneaPam.Api.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
@@ -13,7 +12,7 @@ public sealed class LoginEndpoint(
     ITokenIssuer tokenIssuer,
     IRefreshTokenStore refreshStore,
     IOptions<AuthOptions> authOptions
-) : Endpoint<LoginRequest, LoginResponse>
+) : Endpoint<LoginRequest, ErrorOr<LoginResponse>>
 {
     public override void Configure()
     {
@@ -30,20 +29,18 @@ public sealed class LoginEndpoint(
     {
         var result = await AuthenticateAsync(req, ct);
 
-        await HttpContext.Response.SendResultAsync(
-            result.MatchToResponse(tokens =>
-            {
-                AuthCookies.Append(
-                    HttpContext,
-                    tokens.RefreshToken,
-                    authOptions.Value.RefreshTokenExpiryDays
-                );
-                return Results.Ok(new LoginResponse(tokens.AccessToken));
-            })
-        );
+        Response = result.Then(tokens =>
+        {
+            AuthCookies.Append(
+                HttpContext,
+                tokens.RefreshToken,
+                authOptions.Value.RefreshTokenExpiryDays
+            );
+            return new LoginResponse(tokens.AccessToken);
+        });
     }
 
-    private async Task<ErrorOr<(string AccessToken, string RefreshToken)>> AuthenticateAsync(
+    private async Task<ErrorOr<AuthTokenPair>> AuthenticateAsync(
         LoginRequest request,
         CancellationToken cancellationToken
     )
@@ -59,6 +56,6 @@ public sealed class LoginEndpoint(
         var accessToken = tokenIssuer.CreateAccessToken(user);
         var refreshToken = await refreshStore.CreateAsync(user, cancellationToken);
 
-        return (accessToken, refreshToken);
+        return new AuthTokenPair(accessToken, refreshToken);
     }
 }

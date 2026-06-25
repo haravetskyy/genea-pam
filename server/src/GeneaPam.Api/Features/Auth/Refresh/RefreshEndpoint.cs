@@ -2,7 +2,6 @@ using ErrorOr;
 using FastEndpoints;
 using GeneaPam.Api.Features.Auth.Internal;
 using GeneaPam.Api.Features.Auth.Login;
-using GeneaPam.Api.Infrastructure.Http;
 using Microsoft.Extensions.Options;
 
 namespace GeneaPam.Api.Features.Auth.Refresh;
@@ -11,7 +10,7 @@ public sealed class RefreshEndpoint(
     ITokenIssuer tokenIssuer,
     IRefreshTokenStore refreshStore,
     IOptions<AuthOptions> authOptions
-) : EndpointWithoutRequest<LoginResponse>
+) : EndpointWithoutRequest<ErrorOr<LoginResponse>>
 {
     public override void Configure()
     {
@@ -29,26 +28,24 @@ public sealed class RefreshEndpoint(
         var rawToken = AuthCookies.Read(HttpContext);
         if (string.IsNullOrEmpty(rawToken))
         {
-            await HttpContext.Response.SendResultAsync(AuthErrors.TokenInvalid.ToProblemResult());
+            Response = AuthErrors.TokenInvalid;
             return;
         }
 
         var result = await RotateTokenAsync(rawToken, ct);
 
-        await HttpContext.Response.SendResultAsync(
-            result.MatchToResponse(tokens =>
-            {
-                AuthCookies.Append(
-                    HttpContext,
-                    tokens.RefreshToken,
-                    authOptions.Value.RefreshTokenExpiryDays
-                );
-                return Results.Ok(new LoginResponse(tokens.AccessToken));
-            })
-        );
+        Response = result.Then(tokens =>
+        {
+            AuthCookies.Append(
+                HttpContext,
+                tokens.RefreshToken,
+                authOptions.Value.RefreshTokenExpiryDays
+            );
+            return new LoginResponse(tokens.AccessToken);
+        });
     }
 
-    private async Task<ErrorOr<(string AccessToken, string RefreshToken)>> RotateTokenAsync(
+    private async Task<ErrorOr<AuthTokenPair>> RotateTokenAsync(
         string rawToken,
         CancellationToken cancellationToken
     )
@@ -60,6 +57,6 @@ public sealed class RefreshEndpoint(
         var accessToken = tokenIssuer.CreateAccessToken(user);
         var newRefreshToken = await refreshStore.CreateAsync(user, cancellationToken);
 
-        return (accessToken, newRefreshToken);
+        return new AuthTokenPair(accessToken, newRefreshToken);
     }
 }
