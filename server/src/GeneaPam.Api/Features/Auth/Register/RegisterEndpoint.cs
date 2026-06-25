@@ -1,4 +1,5 @@
 using ErrorOr;
+using FastEndpoints;
 using GeneaPam.Api.Features.Auth.Emails;
 using GeneaPam.Api.Features.Auth.Internal;
 using GeneaPam.Api.Infrastructure.Http;
@@ -8,45 +9,44 @@ using Microsoft.AspNetCore.Identity;
 
 namespace GeneaPam.Api.Features.Auth.Register;
 
-public sealed class RegisterEndpoint : IEndpoint
+public sealed class RegisterEndpoint(
+    RegisterValidator validator,
+    UserManager<ApplicationUser> userManager,
+    IJobDispatcher jobDispatcher
+) : Endpoint<RegisterRequest, RegisterResponse>
 {
-    public void MapEndpoints(IEndpointRouteBuilder app)
+    public override void Configure()
     {
-        app.MapPost("/auth/register", HandleAsync)
-            .AllowAnonymous()
-            .WithTags("Auth")
-            .Produces<RegisterResponse>(StatusCodes.Status201Created)
-            .ProducesProblem(StatusCodes.Status409Conflict)
-            .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
+        Post("/auth/register");
+        AllowAnonymous();
+        Tags("Auth");
+        Description(b =>
+            b.Produces<RegisterResponse>(StatusCodes.Status201Created)
+                .ProducesProblem(StatusCodes.Status409Conflict)
+                .ProducesProblem(StatusCodes.Status422UnprocessableEntity)
+        );
     }
 
-    internal static async Task<IResult> HandleAsync(
-        RegisterRequest request,
-        RegisterValidator validator,
-        UserManager<ApplicationUser> userManager,
-        IJobDispatcher jobDispatcher,
-        CancellationToken cancellationToken
-    )
+    public override async Task HandleAsync(RegisterRequest req, CancellationToken ct)
     {
-        var validated = await validator.ValidateToErrorOrAsync(request, cancellationToken);
+        var validated = await validator.ValidateToErrorOrAsync(req, ct);
         if (validated.IsError)
-            return validated.Errors.ToProblemResult();
+        {
+            await HttpContext.Response.SendResultAsync(validated.Errors.ToProblemResult());
+            return;
+        }
 
-        var result = await RegisterUserAsync(
-            request,
-            userManager,
-            jobDispatcher,
-            cancellationToken
-        );
-        return result.MatchToResponse(response =>
-            Results.Created($"/users/{response.UserId}", response)
+        var result = await RegisterUserAsync(req, ct);
+
+        await HttpContext.Response.SendResultAsync(
+            result.MatchToResponse(response =>
+                Results.Created($"/users/{response.UserId}", response)
+            )
         );
     }
 
-    private static async Task<ErrorOr<RegisterResponse>> RegisterUserAsync(
+    private async Task<ErrorOr<RegisterResponse>> RegisterUserAsync(
         RegisterRequest request,
-        UserManager<ApplicationUser> userManager,
-        IJobDispatcher jobDispatcher,
         CancellationToken cancellationToken
     )
     {

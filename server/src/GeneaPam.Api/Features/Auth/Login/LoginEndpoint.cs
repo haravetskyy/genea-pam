@@ -1,4 +1,5 @@
 using ErrorOr;
+using FastEndpoints;
 using GeneaPam.Api.Features.Auth.Internal;
 using GeneaPam.Api.Infrastructure.Http;
 using GeneaPam.Api.Infrastructure.Persistence;
@@ -7,51 +8,43 @@ using Microsoft.Extensions.Options;
 
 namespace GeneaPam.Api.Features.Auth.Login;
 
-public sealed class LoginEndpoint : IEndpoint
+public sealed class LoginEndpoint(
+    UserManager<ApplicationUser> userManager,
+    ITokenIssuer tokenIssuer,
+    IRefreshTokenStore refreshStore,
+    IOptions<AuthOptions> authOptions
+) : Endpoint<LoginRequest, LoginResponse>
 {
-    public void MapEndpoints(IEndpointRouteBuilder app)
+    public override void Configure()
     {
-        app.MapPost("/auth/login", HandleAsync)
-            .AllowAnonymous()
-            .WithTags("Auth")
-            .Produces<LoginResponse>(StatusCodes.Status200OK)
-            .ProducesProblem(StatusCodes.Status401Unauthorized);
-    }
-
-    internal static async Task<IResult> HandleAsync(
-        LoginRequest request,
-        UserManager<ApplicationUser> userManager,
-        ITokenIssuer tokenIssuer,
-        IRefreshTokenStore refreshStore,
-        IOptions<AuthOptions> authOptions,
-        HttpContext httpContext,
-        CancellationToken cancellationToken
-    )
-    {
-        var result = await AuthenticateAsync(
-            request,
-            userManager,
-            tokenIssuer,
-            refreshStore,
-            cancellationToken
+        Post("/auth/login");
+        AllowAnonymous();
+        Tags("Auth");
+        Description(b =>
+            b.Produces<LoginResponse>(StatusCodes.Status200OK)
+                .ProducesProblem(StatusCodes.Status401Unauthorized)
         );
-
-        return result.MatchToResponse(response =>
-        {
-            AuthCookies.Append(
-                httpContext,
-                response.RefreshToken,
-                authOptions.Value.RefreshTokenExpiryDays
-            );
-            return Results.Ok(new LoginResponse(response.AccessToken));
-        });
     }
 
-    private static async Task<ErrorOr<(string AccessToken, string RefreshToken)>> AuthenticateAsync(
+    public override async Task HandleAsync(LoginRequest req, CancellationToken ct)
+    {
+        var result = await AuthenticateAsync(req, ct);
+
+        await HttpContext.Response.SendResultAsync(
+            result.MatchToResponse(tokens =>
+            {
+                AuthCookies.Append(
+                    HttpContext,
+                    tokens.RefreshToken,
+                    authOptions.Value.RefreshTokenExpiryDays
+                );
+                return Results.Ok(new LoginResponse(tokens.AccessToken));
+            })
+        );
+    }
+
+    private async Task<ErrorOr<(string AccessToken, string RefreshToken)>> AuthenticateAsync(
         LoginRequest request,
-        UserManager<ApplicationUser> userManager,
-        ITokenIssuer tokenIssuer,
-        IRefreshTokenStore refreshStore,
         CancellationToken cancellationToken
     )
     {

@@ -1,31 +1,27 @@
+using FastEndpoints;
 using GeneaPam.Api.Features.Auth.Internal;
-using GeneaPam.Api.Infrastructure.Http;
 
 namespace GeneaPam.Api.Features.Auth.Logout;
 
-public sealed class LogoutEndpoint : IEndpoint
+public sealed class LogoutEndpoint(IRefreshTokenStore refreshStore) : EndpointWithoutRequest
 {
-    public void MapEndpoints(IEndpointRouteBuilder app)
+    public override void Configure()
     {
-        app.MapPost("/auth/logout", HandleAsync)
-            .AllowAnonymous()
-            .WithTags("Auth")
-            .Produces(StatusCodes.Status204NoContent);
+        Post("/auth/logout");
+        AllowAnonymous();
+        Tags("Auth");
+        Description(b => b.Produces(StatusCodes.Status204NoContent));
     }
 
-    internal static async Task<IResult> HandleAsync(
-        HttpContext httpContext,
-        IRefreshTokenStore refreshStore,
-        CancellationToken cancellationToken
-    )
+    public override async Task HandleAsync(CancellationToken ct)
     {
-        var rawToken = AuthCookies.Read(httpContext);
+        var rawToken = AuthCookies.Read(HttpContext);
 
         if (!string.IsNullOrEmpty(rawToken))
-            await refreshStore.RevokeAsync(rawToken, cancellationToken);
+            await refreshStore.RevokeAsync(rawToken, ct);
 
-        AuthCookies.Delete(httpContext);
+        AuthCookies.Delete(HttpContext);
 
-        return Results.NoContent();
+        await HttpContext.Response.SendNoContentAsync(ct);
     }
 }
