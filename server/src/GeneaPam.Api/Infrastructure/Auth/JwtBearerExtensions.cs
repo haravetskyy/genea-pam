@@ -40,7 +40,16 @@ public static class JwtBearerExtensions
                     ClockSkew = TimeSpan.Zero,
                 };
             });
-        services.AddAuthorization();
+
+        services.AddAuthorization(options =>
+        {
+            options.DefaultPolicy =
+                new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder(
+                    JwtBearerDefaults.AuthenticationScheme
+                )
+                    .RequireAuthenticatedUser()
+                    .Build();
+        });
 
         return services;
     }
