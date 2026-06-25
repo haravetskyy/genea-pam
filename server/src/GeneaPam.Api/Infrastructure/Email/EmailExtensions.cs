@@ -28,8 +28,9 @@ public static class EmailExtensions
             var env = sp.GetRequiredService<IWebHostEnvironment>();
             var templatesPath = Path.Combine(
                 env.ContentRootPath,
-                "Infrastructure",
-                "Email",
+                "Features",
+                "Auth",
+                "Emails",
                 "Templates"
             );
             return new RazorLightEngineBuilder()

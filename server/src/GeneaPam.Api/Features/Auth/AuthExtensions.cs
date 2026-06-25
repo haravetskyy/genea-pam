@@ -1,5 +1,8 @@
 using DnsClient;
 using FluentValidation;
+using GeneaPam.Api.Features.Auth.Internal;
+using GeneaPam.Api.Features.Auth.Refresh;
+using GeneaPam.Api.Features.Auth.Register;
 using Microsoft.Extensions.Options;
 using Soenneker.Validators.Email.Disposable.Registrars;
 

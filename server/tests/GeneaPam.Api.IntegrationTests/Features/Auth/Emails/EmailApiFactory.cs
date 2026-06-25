@@ -1,8 +1,4 @@
-using GeneaPam.Api.Features.Auth.Register;
-using GeneaPam.Api.Infrastructure.Jobs;
 using GeneaPam.Api.Infrastructure.Persistence;
-using GeneaPam.Api.IntegrationTests.Infrastructure.Adapters;
-using GeneaPam.Api.UnitTests.Infrastructure.Adapters;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -10,22 +6,21 @@ using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.PostgreSql;
 using WireMock.Server;
 
-namespace GeneaPam.Api.IntegrationTests.Infrastructure;
+namespace GeneaPam.Api.IntegrationTests.Features.Auth.Emails;
 
-public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
+public sealed class EmailApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder()
         .WithImage("postgres:17-alpine")
         .Build();
 
     public WireMockServer WireMock { get; } = WireMockServer.Start();
-    public FakeDnsResolver DnsResolver { get; } = new FakeDnsResolver();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseSetting("Database:ConnectionString", _postgres.GetConnectionString());
-        builder.UseSetting("Auth:HibpBaseUrl", WireMock.Url!);
-        builder.UseSetting("Auth:JwtSecret", "test-secret-key-that-is-at-least-32-chars!!");
+        builder.UseSetting("Email:BaseUrl", WireMock.Url!);
+        builder.UseSetting("Email:ApiKey", "test-key");
 
         builder.ConfigureServices(services =>
         {
@@ -37,12 +32,6 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
                 services.Remove(descriptor);
 
             services.AddDbContext<AppDbContext>(o => o.UseNpgsql(_postgres.GetConnectionString()));
-
-            services.AddSingleton<InMemoryJobDispatcher>();
-            services.AddSingleton<IJobDispatcher>(sp =>
-                sp.GetRequiredService<InMemoryJobDispatcher>()
-            );
-            services.AddSingleton<IDnsResolver>(DnsResolver);
         });
     }
 

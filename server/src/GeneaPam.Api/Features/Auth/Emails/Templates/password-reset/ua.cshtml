@@ -1,0 +1,12 @@
+@model GeneaPam.Api.Features.Auth.Emails.PasswordResetEmailModel
+<!DOCTYPE html>
+<html lang="uk">
+<head><meta charset="utf-8"><title>Скидання пароля</title></head>
+<body>
+  <h1>Запит на скидання пароля</h1>
+  <p>Привіт, @Model.UserName,</p>
+  <p>Натисніть посилання нижче, щоб скинути пароль. Посилання дійсне протягом @Model.ExpiryHours годин.</p>
+  <p><a href="@Model.ResetLink">Скинути пароль</a></p>
+  <p>Якщо ви не запитували скидання пароля, проігноруйте цей лист.</p>
+</body>
+</html>

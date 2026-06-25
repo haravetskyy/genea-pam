@@ -1,5 +1,4 @@
 using System.Text;
-using GeneaPam.Api.Features.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
@@ -13,21 +12,20 @@ public static class JwtBearerExtensions
         IHostEnvironment environment
     )
     {
-        var authOptions =
-            configuration.GetSection(AuthOptions.SectionName).Get<AuthOptions>()
-            ?? new AuthOptions();
+        var jwtOptions =
+            configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
 
         if (
             !environment.IsDevelopment()
-            && (string.IsNullOrEmpty(authOptions.JwtSecret) || authOptions.JwtSecret.Length < 32)
+            && (string.IsNullOrEmpty(jwtOptions.JwtSecret) || jwtOptions.JwtSecret.Length < 32)
         )
             throw new InvalidOperationException(
                 "Auth:JwtSecret must be at least 32 characters in non-Development environments."
             );
 
-        var jwtKey = string.IsNullOrEmpty(authOptions.JwtSecret)
+        var jwtKey = string.IsNullOrEmpty(jwtOptions.JwtSecret)
             ? new string('x', 32)
-            : authOptions.JwtSecret;
+            : jwtOptions.JwtSecret;
 
         services
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
