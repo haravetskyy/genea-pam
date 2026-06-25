@@ -1,4 +1,4 @@
-namespace GeneaPam.Api.Infrastructure.Messaging;
+namespace GeneaPam.Api.Infrastructure.Cache;
 
 public class RedisOptions
 {

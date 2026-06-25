@@ -34,25 +34,25 @@ public static class JobsExtensions
         public ValueTask SendAsync<T>(T message, CancellationToken cancellationToken = default)
             where T : class => bus.SendAsync(message);
     }
-}
 
-internal sealed class RetryAndDeadLetterPolicy : IHandlerPolicy
-{
-    public void Apply(
-        IReadOnlyList<HandlerChain> chains,
-        GenerationRules rules,
-        IServiceContainer container
-    )
+    private sealed class RetryAndDeadLetterPolicy : IHandlerPolicy
     {
-        foreach (var chain in chains)
+        public void Apply(
+            IReadOnlyList<HandlerChain> chains,
+            GenerationRules rules,
+            IServiceContainer container
+        )
         {
-            chain
-                .OnAnyException()
-                .RetryWithCooldown(
-                    TimeSpan.FromSeconds(1),
-                    TimeSpan.FromSeconds(5),
-                    TimeSpan.FromSeconds(15)
-                );
+            foreach (var chain in chains)
+            {
+                chain
+                    .OnAnyException()
+                    .RetryWithCooldown(
+                        TimeSpan.FromSeconds(1),
+                        TimeSpan.FromSeconds(5),
+                        TimeSpan.FromSeconds(15)
+                    );
+            }
         }
     }
 }

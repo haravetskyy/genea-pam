@@ -1,10 +1,10 @@
 using StackExchange.Redis;
 
-namespace GeneaPam.Api.Infrastructure.Messaging;
+namespace GeneaPam.Api.Infrastructure.Cache;
 
-public static class MessagingExtensions
+public static class CacheExtensions
 {
-    public static IServiceCollection AddMessaging(
+    public static IServiceCollection AddCache(
         this IServiceCollection services,
         IConfiguration configuration
     )
