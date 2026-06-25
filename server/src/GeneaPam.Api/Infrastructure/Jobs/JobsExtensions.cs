@@ -1,3 +1,4 @@
+using GeneaPam.Api.Infrastructure.Audit;
 using GeneaPam.Api.Infrastructure.Persistence;
 using JasperFx.CodeGeneration;
 using Wolverine;
@@ -20,6 +21,7 @@ public static class JobsExtensions
             opts.PersistMessagesWithPostgresql(connectionString);
             opts.Policies.AutoApplyTransactions();
             opts.Policies.Add<RetryAndDeadLetterPolicy>();
+            opts.AddAuditBehavior();
         });
 
         host.ConfigureServices(services =>
