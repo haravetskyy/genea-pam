@@ -7,10 +7,6 @@ public class Person
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
     public GenderType? Gender { get; set; }
-    public DateOnly? BirthDate { get; set; }
-    public string? BirthDatePrecision { get; set; }
-    public DateOnly? DeathDate { get; set; }
-    public string? DeathDatePrecision { get; set; }
     public bool ConfirmedDeceased { get; set; }
     public string CreatedBy { get; set; } = string.Empty;
     public DateTimeOffset CreatedAt { get; set; }

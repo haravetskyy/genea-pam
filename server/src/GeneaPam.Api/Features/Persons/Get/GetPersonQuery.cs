@@ -30,18 +30,19 @@ public static class GetPersonQuery
         if (person is null)
             return PersonErrors.NotFound;
 
+        var facts = await db
+            .Facts.Where(f => f.OwnerPersonId == person.Id)
+            .ToListAsync(cancellationToken);
+
         return new GetPersonResponse(
             person.Id,
             person.TreeId,
             person.FirstName,
             person.LastName,
             person.Gender,
-            person.BirthDate,
-            person.BirthDatePrecision,
-            person.DeathDate,
-            person.DeathDatePrecision,
             person.ConfirmedDeceased,
-            LivingStatus.From(person.BirthDate, person.DeathDate, person.ConfirmedDeceased)
+            PersonFacts.StatusOf(facts, person.ConfirmedDeceased),
+            facts.Select(PersonFacts.ToView).ToList()
         );
     }
 }

@@ -82,6 +82,26 @@ public sealed class TreeGraphTests(ApiFactory factory) : IntegrationTest(factory
     )
     {
         SetBearer(token);
+        var facts = new List<object>();
+        if (birthDate.HasValue)
+            facts.Add(
+                new
+                {
+                    type = "Birth",
+                    dateValue = birthDate.Value,
+                    precision = "YearOnly",
+                }
+            );
+        if (deathDate.HasValue)
+            facts.Add(
+                new
+                {
+                    type = "Death",
+                    dateValue = deathDate.Value,
+                    precision = "YearOnly",
+                }
+            );
+
         var response = await Client.PostAsJsonAsync(
             $"/trees/{treeId}/persons",
             new
@@ -89,11 +109,8 @@ public sealed class TreeGraphTests(ApiFactory factory) : IntegrationTest(factory
                 firstName,
                 lastName,
                 gender = "Female",
-                birthDate,
-                birthDatePrecision = birthDate.HasValue ? "Year" : (string?)null,
-                deathDate,
-                deathDatePrecision = deathDate.HasValue ? "Year" : (string?)null,
                 confirmedDeceased,
+                facts,
             }
         );
         var body = await response.Content.ReadFromJsonAsync<CreatePersonResponse>();

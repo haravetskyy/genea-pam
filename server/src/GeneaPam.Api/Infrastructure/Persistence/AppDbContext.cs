@@ -1,4 +1,5 @@
 using GeneaPam.Api.Features.Couples;
+using GeneaPam.Api.Features.Facts;
 using GeneaPam.Api.Features.Persons;
 using GeneaPam.Api.Features.Trees;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -11,10 +12,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
 {
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<Tree> Trees => Set<Tree>();
-    public DbSet<PersonFact> PersonFacts => Set<PersonFact>();
     public DbSet<Person> Persons => Set<Person>();
     public DbSet<Couple> Couples => Set<Couple>();
     public DbSet<Filiation> Filiations => Set<Filiation>();
+    public DbSet<Fact> Facts => Set<Fact>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

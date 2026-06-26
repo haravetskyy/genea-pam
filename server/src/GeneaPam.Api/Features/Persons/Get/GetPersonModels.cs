@@ -1,3 +1,5 @@
+using GeneaPam.Api.Features.Facts;
+
 namespace GeneaPam.Api.Features.Persons.Get;
 
 public sealed record GetPersonResponse(
@@ -6,10 +8,7 @@ public sealed record GetPersonResponse(
     string FirstName,
     string LastName,
     GenderType? Gender,
-    DateOnly? BirthDate,
-    string? BirthDatePrecision,
-    DateOnly? DeathDate,
-    string? DeathDatePrecision,
     bool ConfirmedDeceased,
-    LivingStatus Status
+    LivingStatus Status,
+    IReadOnlyList<FactView> Facts
 );

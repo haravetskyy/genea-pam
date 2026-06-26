@@ -34,6 +34,10 @@ public sealed class UpdatePersonEndpoint : IEndpoint
         if (gender.IsError)
             return gender.Errors.ToProblemResult();
 
+        var facts = PersonFacts.ParseForPerson(request.Facts ?? []);
+        if (facts.IsError)
+            return facts.Errors.ToProblemResult();
+
         var command = new UpdatePersonCommand(
             id,
             treeId,
@@ -41,11 +45,8 @@ public sealed class UpdatePersonEndpoint : IEndpoint
             request.FirstName,
             request.LastName,
             gender.Value,
-            request.BirthDate,
-            request.BirthDatePrecision,
-            request.DeathDate,
-            request.DeathDatePrecision,
-            request.ConfirmedDeceased
+            request.ConfirmedDeceased,
+            facts.Value
         );
         var result = await bus.InvokeAsync<ErrorOr<UpdatePersonResponse>>(
             command,

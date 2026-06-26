@@ -33,17 +33,18 @@ public sealed class CreatePersonEndpoint : IEndpoint
         if (gender.IsError)
             return gender.Errors.ToProblemResult();
 
+        var facts = PersonFacts.ParseForPerson(request.Facts ?? []);
+        if (facts.IsError)
+            return facts.Errors.ToProblemResult();
+
         var command = new CreatePersonCommand(
             treeId,
             userId,
             request.FirstName,
             request.LastName,
             gender.Value,
-            request.BirthDate,
-            request.BirthDatePrecision,
-            request.DeathDate,
-            request.DeathDatePrecision,
-            request.ConfirmedDeceased
+            request.ConfirmedDeceased,
+            facts.Value
         );
         var result = await bus.InvokeAsync<ErrorOr<CreatePersonResponse>>(
             command,

@@ -368,7 +368,7 @@ public sealed class PersonTests(ApiFactory factory) : IntegrationTest(factory)
             {
                 firstName = "Liv",
                 lastName = "Ing",
-                birthDate = new DateOnly(1990, 1, 1),
+                facts = new[] { new { type = "Birth", dateValue = new DateOnly(1990, 1, 1) } },
             }
         );
         var body = await response.Content.ReadFromJsonAsync<CreatePersonResponse>();
@@ -388,8 +388,11 @@ public sealed class PersonTests(ApiFactory factory) : IntegrationTest(factory)
             {
                 firstName = "De",
                 lastName = "Ceased",
-                birthDate = new DateOnly(1900, 1, 1),
-                deathDate = new DateOnly(1970, 1, 1),
+                facts = new[]
+                {
+                    new { type = "Birth", dateValue = new DateOnly(1900, 1, 1) },
+                    new { type = "Death", dateValue = new DateOnly(1970, 1, 1) },
+                },
             }
         );
         var body = await response.Content.ReadFromJsonAsync<CreatePersonResponse>();
@@ -424,8 +427,8 @@ public sealed class PersonTests(ApiFactory factory) : IntegrationTest(factory)
             {
                 firstName = "Conf",
                 lastName = "Irmed",
-                birthDate = new DateOnly(1900, 1, 1),
                 confirmedDeceased = true,
+                facts = new[] { new { type = "Birth", dateValue = new DateOnly(1900, 1, 1) } },
             }
         );
         var body = await response.Content.ReadFromJsonAsync<CreatePersonResponse>();
@@ -446,7 +449,7 @@ public sealed class PersonTests(ApiFactory factory) : IntegrationTest(factory)
             {
                 firstName = "Old",
                 lastName = "Timer",
-                birthDate = new DateOnly(1850, 1, 1),
+                facts = new[] { new { type = "Birth", dateValue = new DateOnly(1850, 1, 1) } },
             }
         );
         var body = await response.Content.ReadFromJsonAsync<CreatePersonResponse>();

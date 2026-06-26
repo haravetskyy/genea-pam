@@ -1,4 +1,5 @@
 using ErrorOr;
+using GeneaPam.Api.Features.Persons.Internal;
 using GeneaPam.Api.Features.Trees.Internal;
 using GeneaPam.Api.Infrastructure.Http;
 using GeneaPam.Api.Infrastructure.Persistence;
@@ -32,10 +33,6 @@ public static class CreatePersonHandler
             FirstName = command.FirstName,
             LastName = command.LastName,
             Gender = command.Gender,
-            BirthDate = command.BirthDate,
-            BirthDatePrecision = command.BirthDatePrecision,
-            DeathDate = command.DeathDate,
-            DeathDatePrecision = command.DeathDatePrecision,
             ConfirmedDeceased = command.ConfirmedDeceased,
             CreatedBy = command.CreatedBy,
             CreatedAt = command.CreatedAt,
@@ -44,6 +41,18 @@ public static class CreatePersonHandler
         };
 
         db.Persons.Add(person);
+
+        foreach (var fact in command.Facts)
+        {
+            fact.TreeId = command.TreeId;
+            fact.OwnerPersonId = person.Id;
+            fact.CreatedBy = command.CreatedBy;
+            fact.CreatedAt = command.CreatedAt;
+            fact.UpdatedBy = command.UpdatedBy;
+            fact.UpdatedAt = command.UpdatedAt;
+            db.Facts.Add(fact);
+        }
+
         await db.SaveChangesAsync(cancellationToken);
 
         return new CreatePersonResponse(
@@ -52,12 +61,9 @@ public static class CreatePersonHandler
             person.FirstName,
             person.LastName,
             person.Gender,
-            person.BirthDate,
-            person.BirthDatePrecision,
-            person.DeathDate,
-            person.DeathDatePrecision,
             person.ConfirmedDeceased,
-            LivingStatus.From(person.BirthDate, person.DeathDate, person.ConfirmedDeceased)
+            PersonFacts.StatusOf(command.Facts, person.ConfirmedDeceased),
+            command.Facts.Select(PersonFacts.ToView).ToList()
         );
     }
 }

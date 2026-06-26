@@ -18,4 +18,14 @@ public static class PersonErrors
         code: "Person.GenderInvalid",
         description: "Gender must be one of: Male, Female, Other."
     );
+
+    public static readonly Error DuplicateBirthFact = Error.Validation(
+        code: "Person.DuplicateBirthFact",
+        description: "A Person can have at most one Birth fact."
+    );
+
+    public static readonly Error DuplicateDeathFact = Error.Validation(
+        code: "Person.DuplicateDeathFact",
+        description: "A Person can have at most one Death fact."
+    );
 }

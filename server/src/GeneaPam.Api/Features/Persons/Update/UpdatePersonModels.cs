@@ -1,3 +1,4 @@
+using GeneaPam.Api.Features.Facts;
 using GeneaPam.Api.Infrastructure.Audit;
 
 namespace GeneaPam.Api.Features.Persons.Update;
@@ -6,11 +7,8 @@ public sealed record UpdatePersonRequest(
     string FirstName,
     string LastName,
     string? Gender,
-    DateOnly? BirthDate,
-    string? BirthDatePrecision,
-    DateOnly? DeathDate,
-    string? DeathDatePrecision,
-    bool ConfirmedDeceased = false
+    bool ConfirmedDeceased = false,
+    IReadOnlyList<FactInput>? Facts = null
 );
 
 public sealed record UpdatePersonResponse(
@@ -19,12 +17,9 @@ public sealed record UpdatePersonResponse(
     string FirstName,
     string LastName,
     GenderType? Gender,
-    DateOnly? BirthDate,
-    string? BirthDatePrecision,
-    DateOnly? DeathDate,
-    string? DeathDatePrecision,
     bool ConfirmedDeceased,
-    LivingStatus Status
+    LivingStatus Status,
+    IReadOnlyList<FactView> Facts
 );
 
 public sealed record UpdatePersonCommand(
@@ -34,11 +29,8 @@ public sealed record UpdatePersonCommand(
     string FirstName,
     string LastName,
     GenderType? Gender,
-    DateOnly? BirthDate,
-    string? BirthDatePrecision,
-    DateOnly? DeathDate,
-    string? DeathDatePrecision,
-    bool ConfirmedDeceased
+    bool ConfirmedDeceased,
+    IReadOnlyList<Fact> Facts
 ) : IUpdateCommand
 {
     public string UpdatedBy { get; set; } = string.Empty;

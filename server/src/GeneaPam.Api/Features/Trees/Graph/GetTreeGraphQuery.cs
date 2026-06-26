@@ -1,4 +1,5 @@
 using ErrorOr;
+using GeneaPam.Api.Features.Facts;
 using GeneaPam.Api.Features.Persons;
 using GeneaPam.Api.Features.Trees.Internal;
 using GeneaPam.Api.Infrastructure.Persistence;
@@ -30,13 +31,27 @@ public static class GetTreeGraphQuery
             .Filiations.Where(f => f.TreeId == id)
             .ToListAsync(cancellationToken);
 
+        // Birth/Death dates now live on the persons' Facts; resolve them per person.
+        var dateFacts = await db
+            .Facts.Where(f => f.TreeId == id && f.OwnerPersonId != null)
+            .ToListAsync(cancellationToken);
+
+        DateOnly? BirthOf(Guid personId) =>
+            dateFacts
+                .FirstOrDefault(f => f.OwnerPersonId == personId && f.Type == FactType.Birth)
+                ?.DateValue;
+        DateOnly? DeathOf(Guid personId) =>
+            dateFacts
+                .FirstOrDefault(f => f.OwnerPersonId == personId && f.Type == FactType.Death)
+                ?.DateValue;
+
         var nodes = persons
             .Select(p => new GraphNode(
                 p.Id,
                 $"{p.FirstName} {p.LastName}",
-                p.BirthDate?.Year,
-                p.DeathDate?.Year,
-                LivingStatus.From(p.BirthDate, p.DeathDate, p.ConfirmedDeceased)
+                BirthOf(p.Id)?.Year,
+                DeathOf(p.Id)?.Year,
+                LivingStatus.From(BirthOf(p.Id), DeathOf(p.Id), p.ConfirmedDeceased)
             ))
             .ToList();
 
