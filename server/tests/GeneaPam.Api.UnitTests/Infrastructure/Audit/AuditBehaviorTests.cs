@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using GeneaPam.Api.Infrastructure.Audit;
 using Microsoft.AspNetCore.Http;
+using Wolverine;
 
 namespace GeneaPam.Api.UnitTests.Infrastructure.Audit;
 
@@ -34,7 +35,7 @@ public sealed class AuditBehaviorTests
         var behavior = new AuditBehavior(accessor);
         var cmd = new CreateCmd();
 
-        behavior.Before(cmd);
+        behavior.Before(new Envelope { Message = cmd });
 
         Assert.Equal("user-42", cmd.CreatedBy);
     }
@@ -47,7 +48,7 @@ public sealed class AuditBehaviorTests
         var behavior = new AuditBehavior(accessor);
         var cmd = new CreateCmd();
 
-        behavior.Before(cmd);
+        behavior.Before(new Envelope { Message = cmd });
 
         Assert.True(cmd.CreatedAt >= before);
     }
@@ -59,7 +60,7 @@ public sealed class AuditBehaviorTests
         var behavior = new AuditBehavior(accessor);
         var cmd = new UpdateCmd();
 
-        behavior.Before(cmd);
+        behavior.Before(new Envelope { Message = cmd });
 
         Assert.Equal("user-99", cmd.UpdatedBy);
     }
@@ -72,7 +73,7 @@ public sealed class AuditBehaviorTests
         var behavior = new AuditBehavior(accessor);
         var cmd = new UpdateCmd();
 
-        behavior.Before(cmd);
+        behavior.Before(new Envelope { Message = cmd });
 
         Assert.True(cmd.UpdatedAt >= before);
     }

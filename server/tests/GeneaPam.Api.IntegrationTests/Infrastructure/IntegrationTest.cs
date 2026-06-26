@@ -8,4 +8,5 @@ public abstract class IntegrationTest(ApiFactory factory) : IClassFixture<ApiFac
     protected HttpClient Client { get; } =
         factory.CreateClient(new WebApplicationFactoryClientOptions { HandleCookies = false });
     protected WireMockServer WireMock { get; } = factory.WireMock;
+    protected IServiceProvider Services { get; } = factory.Services;
 }

@@ -1,8 +1,6 @@
 using System.Security.Claims;
-using GeneaPam.Api.Features.Trees.Internal;
 using GeneaPam.Api.Infrastructure.Http;
 using GeneaPam.Api.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
 
 namespace GeneaPam.Api.Features.Trees.Get;
 
@@ -27,13 +25,8 @@ public sealed class GetTreeEndpoint : IEndpoint
     {
         var userId = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-        var tree = await db.Trees.FirstOrDefaultAsync(
-            t => t.Id == id && t.OwnerId == userId,
-            cancellationToken
-        );
-        if (tree is null)
-            return TreeErrors.NotFound.ToProblemResult();
+        var result = await GetTreeQuery.Handle(db, id, userId, cancellationToken);
 
-        return Results.Ok(new GetTreeResponse(tree.Id, tree.Name, tree.Description));
+        return result.MatchToResponse(Results.Ok);
     }
 }

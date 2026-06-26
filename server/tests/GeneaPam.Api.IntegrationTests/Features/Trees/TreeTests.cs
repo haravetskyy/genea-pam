@@ -3,12 +3,16 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using GeneaPam.Api.Features.Auth.Login;
 using GeneaPam.Api.Features.Trees.Create;
 using GeneaPam.Api.Features.Trees.Get;
 using GeneaPam.Api.Features.Trees.List;
 using GeneaPam.Api.Features.Trees.Update;
+using GeneaPam.Api.Infrastructure.Persistence;
 using GeneaPam.Api.IntegrationTests.Infrastructure;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
 
@@ -97,6 +101,40 @@ public sealed class TreeTests(ApiFactory factory) : IntegrationTest(factory)
         var body = await response.Content.ReadFromJsonAsync<CreateTreeResponse>();
         Assert.NotNull(body);
         Assert.NotEqual(Guid.Empty, body.Id);
+    }
+
+    [Fact]
+    public async Task CreateTree_BlankName_Returns422()
+    {
+        var token = await RegisterAndLoginAsync("trees_blankname@example.com");
+        SetBearer(token);
+
+        var response = await Client.PostAsJsonAsync(
+            "/trees",
+            new { name = "", description = "My family tree" }
+        );
+
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
+
+        var problem = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("Tree.NameRequired", problem.GetProperty("errorCode").GetString());
+    }
+
+    [Fact]
+    public async Task CreateTree_StampsAuditFieldsViaMiddleware()
+    {
+        var token = await RegisterAndLoginAsync("trees_audit@example.com");
+        var id = await CreateTreeAsync(token);
+
+        await using var scope = Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var tree = await db.Trees.AsNoTracking().SingleAsync(t => t.Id == id);
+
+        Assert.False(string.IsNullOrEmpty(tree.CreatedBy));
+        Assert.False(string.IsNullOrEmpty(tree.UpdatedBy));
+        Assert.Equal(tree.OwnerId, tree.CreatedBy);
+        Assert.NotEqual(default, tree.CreatedAt);
+        Assert.NotEqual(default, tree.UpdatedAt);
     }
 
     [Fact]

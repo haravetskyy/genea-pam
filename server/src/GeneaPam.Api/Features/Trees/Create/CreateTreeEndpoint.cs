@@ -1,7 +1,7 @@
 using System.Security.Claims;
+using ErrorOr;
 using GeneaPam.Api.Infrastructure.Http;
-using GeneaPam.Api.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
+using Wolverine;
 
 namespace GeneaPam.Api.Features.Trees.Create;
 
@@ -13,36 +13,24 @@ public sealed class CreateTreeEndpoint : IEndpoint
             .RequireAuthorization()
             .WithTags("Trees")
             .Produces<CreateTreeResponse>(StatusCodes.Status201Created)
-            .ProducesProblem(StatusCodes.Status401Unauthorized);
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
     }
 
     internal static async Task<IResult> HandleAsync(
         CreateTreeRequest request,
         HttpContext httpContext,
-        AppDbContext db,
+        IMessageBus bus,
         CancellationToken cancellationToken
     )
     {
         var userId = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-        var now = DateTimeOffset.UtcNow;
 
-        var tree = new Tree
-        {
-            OwnerId = userId,
-            Name = request.Name,
-            Description = request.Description,
-            CreatedBy = userId,
-            CreatedAt = now,
-            UpdatedBy = userId,
-            UpdatedAt = now,
-        };
+        var command = new CreateTreeCommand(userId, request.Name, request.Description);
+        var result = await bus.InvokeAsync<ErrorOr<CreateTreeResponse>>(command, cancellationToken);
 
-        db.Trees.Add(tree);
-        await db.SaveChangesAsync(cancellationToken);
-
-        return Results.Created(
-            $"/trees/{tree.Id}",
-            new CreateTreeResponse(tree.Id, tree.Name, tree.Description)
+        return result.MatchToResponse(response =>
+            Results.Created($"/trees/{response.Id}", response)
         );
     }
 }
