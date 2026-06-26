@@ -3,12 +3,17 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using GeneaPam.Api.Features.Auth.Login;
+using GeneaPam.Api.Features.Couples;
 using GeneaPam.Api.Features.Couples.AddFiliation;
 using GeneaPam.Api.Features.Couples.Create;
 using GeneaPam.Api.Features.Persons.Create;
 using GeneaPam.Api.Features.Trees.Create;
+using GeneaPam.Api.Infrastructure.Persistence;
 using GeneaPam.Api.IntegrationTests.Infrastructure;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
 
@@ -181,6 +186,67 @@ public sealed class CoupleTests(ApiFactory factory) : IntegrationTest(factory)
         );
 
         Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task CreateCouple_SamePersonBothSides_ReturnsProblemErrorCode()
+    {
+        var token = await RegisterAndLoginAsync("cc_same_person_code@example.com");
+        var treeId = await CreateTreeAsync(token);
+        var personId = await CreatePersonAsync(token, treeId);
+        SetBearer(token);
+
+        var response = await Client.PostAsJsonAsync(
+            $"/trees/{treeId}/couples",
+            new { personAId = personId, personBId = personId }
+        );
+
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
+
+        var problem = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("Couple.SamePersonBothSides", problem.GetProperty("errorCode").GetString());
+    }
+
+    [Fact]
+    public async Task CreateCouple_StampsAuditFieldsViaMiddleware()
+    {
+        var token = await RegisterAndLoginAsync("cc_audit@example.com");
+        var treeId = await CreateTreeAsync(token);
+        var pA = await CreatePersonAsync(token, treeId, "Alice", "Smith");
+        var pB = await CreatePersonAsync(token, treeId, "Bob", "Smith");
+        var coupleId = await CreateCoupleAsync(token, treeId, pA, pB);
+
+        await using var scope = Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var couple = await db.Couples.AsNoTracking().SingleAsync(c => c.Id == coupleId);
+
+        Assert.False(string.IsNullOrEmpty(couple.CreatedBy));
+        Assert.False(string.IsNullOrEmpty(couple.UpdatedBy));
+        Assert.Equal(couple.CreatedBy, couple.UpdatedBy);
+        Assert.NotEqual(default, couple.CreatedAt);
+        Assert.NotEqual(default, couple.UpdatedAt);
+    }
+
+    [Fact]
+    public async Task AddFiliation_StampsAuditFieldsViaMiddleware()
+    {
+        var token = await RegisterAndLoginAsync("af_audit@example.com");
+        var treeId = await CreateTreeAsync(token);
+        var pA = await CreatePersonAsync(token, treeId, "Alice", "Smith");
+        var pB = await CreatePersonAsync(token, treeId, "Bob", "Smith");
+        var child = await CreatePersonAsync(token, treeId, "Charlie", "Smith");
+        var coupleId = await CreateCoupleAsync(token, treeId, pA, pB);
+        var filiationId = await AddFiliationAsync(token, treeId, coupleId, child);
+
+        await using var scope = Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var filiation = await db.Filiations.AsNoTracking().SingleAsync(f => f.Id == filiationId);
+
+        Assert.False(string.IsNullOrEmpty(filiation.CreatedBy));
+        Assert.False(string.IsNullOrEmpty(filiation.UpdatedBy));
+        Assert.Equal(filiation.CreatedBy, filiation.UpdatedBy);
+        Assert.NotEqual(default, filiation.CreatedAt);
+        Assert.NotEqual(default, filiation.UpdatedAt);
     }
 
     [Fact]
