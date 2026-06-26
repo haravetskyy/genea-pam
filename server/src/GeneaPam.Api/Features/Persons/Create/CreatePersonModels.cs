@@ -1,3 +1,4 @@
+using GeneaPam.Api.Features.Facts;
 using GeneaPam.Api.Infrastructure.Audit;
 
 namespace GeneaPam.Api.Features.Persons.Create;
@@ -6,11 +7,8 @@ public sealed record CreatePersonRequest(
     string FirstName,
     string LastName,
     string? Gender,
-    DateOnly? BirthDate,
-    string? BirthDatePrecision,
-    DateOnly? DeathDate,
-    string? DeathDatePrecision,
-    bool ConfirmedDeceased = false
+    bool ConfirmedDeceased = false,
+    IReadOnlyList<FactInput>? Facts = null
 );
 
 public sealed record CreatePersonResponse(
@@ -19,12 +17,9 @@ public sealed record CreatePersonResponse(
     string FirstName,
     string LastName,
     GenderType? Gender,
-    DateOnly? BirthDate,
-    string? BirthDatePrecision,
-    DateOnly? DeathDate,
-    string? DeathDatePrecision,
     bool ConfirmedDeceased,
-    LivingStatus Status
+    LivingStatus Status,
+    IReadOnlyList<FactView> Facts
 );
 
 public sealed record CreatePersonCommand(
@@ -33,11 +28,8 @@ public sealed record CreatePersonCommand(
     string FirstName,
     string LastName,
     GenderType? Gender,
-    DateOnly? BirthDate,
-    string? BirthDatePrecision,
-    DateOnly? DeathDate,
-    string? DeathDatePrecision,
-    bool ConfirmedDeceased
+    bool ConfirmedDeceased,
+    IReadOnlyList<Fact> Facts
 ) : ICreateCommand, IUpdateCommand
 {
     public string CreatedBy { get; set; } = string.Empty;

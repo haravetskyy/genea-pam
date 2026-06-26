@@ -1,4 +1,5 @@
 using ErrorOr;
+using GeneaPam.Api.Features.Facts;
 using GeneaPam.Api.Features.Persons.Internal;
 using GeneaPam.Api.Features.Trees.Internal;
 using GeneaPam.Api.Infrastructure.Http;
@@ -37,13 +38,28 @@ public static class UpdatePersonHandler
         person.FirstName = command.FirstName;
         person.LastName = command.LastName;
         person.Gender = command.Gender;
-        person.BirthDate = command.BirthDate;
-        person.BirthDatePrecision = command.BirthDatePrecision;
-        person.DeathDate = command.DeathDate;
-        person.DeathDatePrecision = command.DeathDatePrecision;
         person.ConfirmedDeceased = command.ConfirmedDeceased;
         person.UpdatedBy = command.UpdatedBy;
         person.UpdatedAt = command.UpdatedAt;
+
+        // Full-replace: the incoming facts are the person's complete fact set.
+        var existing = await db
+            .Facts.Where(f => f.OwnerPersonId == person.Id)
+            .ToListAsync(cancellationToken);
+        db.Facts.RemoveRange(existing);
+
+        var newFacts = new List<Fact>(command.Facts.Count);
+        foreach (var fact in command.Facts)
+        {
+            fact.TreeId = command.TreeId;
+            fact.OwnerPersonId = person.Id;
+            fact.CreatedBy = command.UpdatedBy;
+            fact.CreatedAt = command.UpdatedAt;
+            fact.UpdatedBy = command.UpdatedBy;
+            fact.UpdatedAt = command.UpdatedAt;
+            db.Facts.Add(fact);
+            newFacts.Add(fact);
+        }
 
         await db.SaveChangesAsync(cancellationToken);
 
@@ -53,12 +69,9 @@ public static class UpdatePersonHandler
             person.FirstName,
             person.LastName,
             person.Gender,
-            person.BirthDate,
-            person.BirthDatePrecision,
-            person.DeathDate,
-            person.DeathDatePrecision,
             person.ConfirmedDeceased,
-            LivingStatus.From(person.BirthDate, person.DeathDate, person.ConfirmedDeceased)
+            PersonFacts.StatusOf(newFacts, person.ConfirmedDeceased),
+            newFacts.Select(PersonFacts.ToView).ToList()
         );
     }
 }

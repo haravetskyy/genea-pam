@@ -22,10 +22,6 @@ public sealed class PersonConfiguration : IEntityTypeConfiguration<Person>
             .Property(p => p.Gender)
             .HasColumnName("gender")
             .HasConversion(v => v!.Value, s => GenderType.TryParse(s));
-        builder.Property(p => p.BirthDate).HasColumnName("birth_date");
-        builder.Property(p => p.BirthDatePrecision).HasColumnName("birth_date_precision");
-        builder.Property(p => p.DeathDate).HasColumnName("death_date");
-        builder.Property(p => p.DeathDatePrecision).HasColumnName("death_date_precision");
         builder
             .Property(p => p.ConfirmedDeceased)
             .HasColumnName("confirmed_deceased")
