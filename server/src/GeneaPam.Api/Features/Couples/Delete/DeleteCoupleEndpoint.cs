@@ -1,9 +1,7 @@
 using System.Security.Claims;
-using GeneaPam.Api.Features.Couples.Internal;
-using GeneaPam.Api.Features.Trees.Internal;
+using ErrorOr;
 using GeneaPam.Api.Infrastructure.Http;
-using GeneaPam.Api.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
+using Wolverine;
 
 namespace GeneaPam.Api.Features.Couples.Delete;
 
@@ -23,29 +21,15 @@ public sealed class DeleteCoupleEndpoint : IEndpoint
         Guid treeId,
         Guid id,
         HttpContext httpContext,
-        AppDbContext db,
+        IMessageBus bus,
         CancellationToken cancellationToken
     )
     {
         var userId = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-        var tree = await db.Trees.FirstOrDefaultAsync(
-            t => t.Id == treeId && t.OwnerId == userId,
-            cancellationToken
-        );
-        if (tree is null)
-            return TreeErrors.NotFound.ToProblemResult();
+        var command = new DeleteCoupleCommand(id, treeId, userId);
+        var result = await bus.InvokeAsync<ErrorOr<Deleted>>(command, cancellationToken);
 
-        var couple = await db.Couples.FirstOrDefaultAsync(
-            c => c.Id == id && c.TreeId == treeId,
-            cancellationToken
-        );
-        if (couple is null)
-            return CoupleErrors.NotFound.ToProblemResult();
-
-        db.Couples.Remove(couple);
-        await db.SaveChangesAsync(cancellationToken);
-
-        return Results.NoContent();
+        return result.MatchToResponse(_ => Results.NoContent());
     }
 }
