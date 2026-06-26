@@ -3,12 +3,17 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using GeneaPam.Api.Features.Auth.Login;
+using GeneaPam.Api.Features.Persons;
 using GeneaPam.Api.Features.Persons.Create;
 using GeneaPam.Api.Features.Persons.Get;
 using GeneaPam.Api.Features.Persons.Update;
 using GeneaPam.Api.Features.Trees.Create;
+using GeneaPam.Api.Infrastructure.Persistence;
 using GeneaPam.Api.IntegrationTests.Infrastructure;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
 
@@ -128,6 +133,42 @@ public sealed class PersonTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.NotEqual(Guid.Empty, body.Id);
         Assert.Equal("Jane", body.FirstName);
         Assert.Equal("Doe", body.LastName);
+    }
+
+    [Fact]
+    public async Task CreatePerson_BlankFirstName_Returns422()
+    {
+        var token = await RegisterAndLoginAsync("persons_blankname@example.com");
+        var treeId = await CreateTreeAsync(token);
+        SetBearer(token);
+
+        var response = await Client.PostAsJsonAsync(
+            $"/trees/{treeId}/persons",
+            new { firstName = "", lastName = "Doe" }
+        );
+
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
+
+        var problem = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("Person.FirstNameRequired", problem.GetProperty("errorCode").GetString());
+    }
+
+    [Fact]
+    public async Task CreatePerson_StampsAuditFieldsViaMiddleware()
+    {
+        var token = await RegisterAndLoginAsync("persons_audit@example.com");
+        var treeId = await CreateTreeAsync(token);
+        var personId = await CreatePersonAsync(token, treeId);
+
+        await using var scope = Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var person = await db.Persons.AsNoTracking().SingleAsync(p => p.Id == personId);
+
+        Assert.False(string.IsNullOrEmpty(person.CreatedBy));
+        Assert.False(string.IsNullOrEmpty(person.UpdatedBy));
+        Assert.Equal(person.CreatedBy, person.UpdatedBy);
+        Assert.NotEqual(default, person.CreatedAt);
+        Assert.NotEqual(default, person.UpdatedAt);
     }
 
     [Fact]
