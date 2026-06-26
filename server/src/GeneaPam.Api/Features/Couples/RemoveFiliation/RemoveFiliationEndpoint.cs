@@ -9,12 +9,9 @@ public sealed class RemoveFiliationEndpoint : IEndpoint
 {
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
-        app.MapDelete(
-                "/trees/{treeId:guid}/couples/{coupleId:guid}/filiations/{id:guid}",
-                HandleAsync
-            )
+        app.MapDelete("/trees/{treeId:guid}/filiations/{id:guid}", HandleAsync)
             .RequireAuthorization()
-            .WithTags("Couples")
+            .WithTags("Filiations")
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status404NotFound);
@@ -22,7 +19,6 @@ public sealed class RemoveFiliationEndpoint : IEndpoint
 
     internal static async Task<IResult> HandleAsync(
         Guid treeId,
-        Guid coupleId,
         Guid id,
         HttpContext httpContext,
         IMessageBus bus,
@@ -31,7 +27,7 @@ public sealed class RemoveFiliationEndpoint : IEndpoint
     {
         var userId = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-        var command = new RemoveFiliationCommand(id, coupleId, treeId, userId);
+        var command = new RemoveFiliationCommand(id, treeId, userId);
         var result = await bus.InvokeAsync<ErrorOr<Deleted>>(command, cancellationToken);
 
         return result.MatchToResponse(_ => Results.NoContent());

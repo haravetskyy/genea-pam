@@ -2,15 +2,26 @@ using GeneaPam.Api.Infrastructure.Audit;
 
 namespace GeneaPam.Api.Features.Couples.AddFiliation;
 
-public sealed record AddFiliationRequest(Guid ChildPersonId);
+public sealed record AddFiliationRequest(
+    Guid ChildPersonId,
+    Guid ParentPersonId,
+    string? ParentageType = null
+);
 
-public sealed record AddFiliationResponse(Guid Id, Guid CoupleId, Guid ChildPersonId);
+public sealed record AddFiliationResponse(
+    Guid Id,
+    Guid TreeId,
+    Guid ChildPersonId,
+    Guid ParentPersonId,
+    ParentageType ParentageType
+);
 
 public sealed record AddFiliationCommand(
     Guid TreeId,
-    Guid CoupleId,
     string OwnerId,
-    Guid ChildPersonId
+    Guid ChildPersonId,
+    Guid ParentPersonId,
+    ParentageType ParentageType
 ) : ICreateCommand, IUpdateCommand
 {
     public string CreatedBy { get; set; } = string.Empty;

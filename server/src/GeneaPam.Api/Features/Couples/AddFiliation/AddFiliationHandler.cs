@@ -21,17 +21,33 @@ public static class AddFiliationHandler
         if (!treeOwned)
             return TreeErrors.NotFound;
 
-        var coupleExists = await db.Couples.AnyAsync(
-            c => c.Id == command.CoupleId && c.TreeId == command.TreeId,
+        if (command.ChildPersonId == command.ParentPersonId)
+            return FiliationErrors.SelfParent;
+
+        var bothInTree = await db
+            .Persons.Where(p =>
+                p.TreeId == command.TreeId
+                && (p.Id == command.ChildPersonId || p.Id == command.ParentPersonId)
+            )
+            .CountAsync(cancellationToken);
+        if (bothInTree != 2)
+            return FiliationErrors.PersonNotInTree;
+
+        var duplicate = await db.Filiations.AnyAsync(
+            f =>
+                f.ChildPersonId == command.ChildPersonId
+                && f.ParentPersonId == command.ParentPersonId,
             cancellationToken
         );
-        if (!coupleExists)
-            return CoupleErrors.NotFound;
+        if (duplicate)
+            return FiliationErrors.Duplicate;
 
         var filiation = new Filiation
         {
-            CoupleId = command.CoupleId,
+            TreeId = command.TreeId,
             ChildPersonId = command.ChildPersonId,
+            ParentPersonId = command.ParentPersonId,
+            ParentageType = command.ParentageType,
             CreatedBy = command.CreatedBy,
             CreatedAt = command.CreatedAt,
             UpdatedBy = command.UpdatedBy,
@@ -41,6 +57,12 @@ public static class AddFiliationHandler
         db.Filiations.Add(filiation);
         await db.SaveChangesAsync(cancellationToken);
 
-        return new AddFiliationResponse(filiation.Id, filiation.CoupleId, filiation.ChildPersonId);
+        return new AddFiliationResponse(
+            filiation.Id,
+            filiation.TreeId,
+            filiation.ChildPersonId,
+            filiation.ParentPersonId,
+            filiation.ParentageType
+        );
     }
 }
