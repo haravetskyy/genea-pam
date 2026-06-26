@@ -13,4 +13,9 @@ public static class CoupleErrors
         code: "Couple.SamePersonBothSides",
         description: "A Person cannot be both person_a and person_b in the same Couple."
     );
+
+    public static readonly Error TypeInvalid = Error.Validation(
+        code: "Couple.TypeInvalid",
+        description: "Type must be one of: Married, Partners, Separated, Divorced, Other."
+    );
 }

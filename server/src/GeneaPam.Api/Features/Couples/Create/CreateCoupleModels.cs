@@ -2,21 +2,22 @@ using GeneaPam.Api.Infrastructure.Audit;
 
 namespace GeneaPam.Api.Features.Couples.Create;
 
-public sealed record CreateCoupleRequest(Guid PersonAId, Guid PersonBId);
+public sealed record CreateCoupleRequest(Guid PersonAId, Guid PersonBId, string? Type = null);
 
 public sealed record CreateCoupleResponse(
     Guid Id,
     Guid TreeId,
     Guid PersonAId,
     Guid PersonBId,
-    string Type
+    CoupleType Type
 );
 
 public sealed record CreateCoupleCommand(
     Guid TreeId,
     string OwnerId,
     Guid PersonAId,
-    Guid PersonBId
+    Guid PersonBId,
+    CoupleType Type
 ) : ICreateCommand, IUpdateCommand
 {
     public string CreatedBy { get; set; } = string.Empty;
