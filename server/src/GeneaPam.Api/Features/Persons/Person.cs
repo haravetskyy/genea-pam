@@ -11,6 +11,7 @@ public class Person
     public string? BirthDatePrecision { get; set; }
     public DateOnly? DeathDate { get; set; }
     public string? DeathDatePrecision { get; set; }
+    public bool ConfirmedDeceased { get; set; }
     public string CreatedBy { get; set; } = string.Empty;
     public DateTimeOffset CreatedAt { get; set; }
     public string UpdatedBy { get; set; } = string.Empty;

@@ -9,7 +9,8 @@ public sealed record UpdatePersonRequest(
     DateOnly? BirthDate,
     string? BirthDatePrecision,
     DateOnly? DeathDate,
-    string? DeathDatePrecision
+    string? DeathDatePrecision,
+    bool ConfirmedDeceased = false
 );
 
 public sealed record UpdatePersonResponse(
@@ -21,7 +22,9 @@ public sealed record UpdatePersonResponse(
     DateOnly? BirthDate,
     string? BirthDatePrecision,
     DateOnly? DeathDate,
-    string? DeathDatePrecision
+    string? DeathDatePrecision,
+    bool ConfirmedDeceased,
+    LivingStatus Status
 );
 
 public sealed record UpdatePersonCommand(
@@ -34,7 +37,8 @@ public sealed record UpdatePersonCommand(
     DateOnly? BirthDate,
     string? BirthDatePrecision,
     DateOnly? DeathDate,
-    string? DeathDatePrecision
+    string? DeathDatePrecision,
+    bool ConfirmedDeceased
 ) : IUpdateCommand
 {
     public string UpdatedBy { get; set; } = string.Empty;

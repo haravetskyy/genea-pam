@@ -353,6 +353,165 @@ public sealed class PersonTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.Contains("ck_persons_gender", ex.Message);
     }
 
+    // --- LIVING STATUS (derived three-state, #96) ---
+
+    [Fact]
+    public async Task CreatePerson_BirthDateOnly_DerivesLiving()
+    {
+        var token = await RegisterAndLoginAsync("ls_living@example.com");
+        var treeId = await CreateTreeAsync(token);
+        SetBearer(token);
+
+        var response = await Client.PostAsJsonAsync(
+            $"/trees/{treeId}/persons",
+            new
+            {
+                firstName = "Liv",
+                lastName = "Ing",
+                birthDate = new DateOnly(1990, 1, 1),
+            }
+        );
+        var body = await response.Content.ReadFromJsonAsync<CreatePersonResponse>();
+        Assert.Equal(LivingStatus.Living, body!.Status);
+    }
+
+    [Fact]
+    public async Task CreatePerson_DeathDate_DerivesDeceased()
+    {
+        var token = await RegisterAndLoginAsync("ls_deceased@example.com");
+        var treeId = await CreateTreeAsync(token);
+        SetBearer(token);
+
+        var response = await Client.PostAsJsonAsync(
+            $"/trees/{treeId}/persons",
+            new
+            {
+                firstName = "De",
+                lastName = "Ceased",
+                birthDate = new DateOnly(1900, 1, 1),
+                deathDate = new DateOnly(1970, 1, 1),
+            }
+        );
+        var body = await response.Content.ReadFromJsonAsync<CreatePersonResponse>();
+        Assert.Equal(LivingStatus.Deceased, body!.Status);
+    }
+
+    [Fact]
+    public async Task CreatePerson_NoDates_DerivesUnknown()
+    {
+        var token = await RegisterAndLoginAsync("ls_unknown@example.com");
+        var treeId = await CreateTreeAsync(token);
+        SetBearer(token);
+
+        var response = await Client.PostAsJsonAsync(
+            $"/trees/{treeId}/persons",
+            new { firstName = "Un", lastName = "Known" }
+        );
+        var body = await response.Content.ReadFromJsonAsync<CreatePersonResponse>();
+        Assert.Equal(LivingStatus.Unknown, body!.Status);
+    }
+
+    [Fact]
+    public async Task CreatePerson_ConfirmedDeceasedNoDeathDate_DerivesDeceased()
+    {
+        var token = await RegisterAndLoginAsync("ls_confirmed@example.com");
+        var treeId = await CreateTreeAsync(token);
+        SetBearer(token);
+
+        var response = await Client.PostAsJsonAsync(
+            $"/trees/{treeId}/persons",
+            new
+            {
+                firstName = "Conf",
+                lastName = "Irmed",
+                birthDate = new DateOnly(1900, 1, 1),
+                confirmedDeceased = true,
+            }
+        );
+        var body = await response.Content.ReadFromJsonAsync<CreatePersonResponse>();
+        Assert.True(body!.ConfirmedDeceased);
+        Assert.Equal(LivingStatus.Deceased, body.Status);
+    }
+
+    [Fact]
+    public async Task CreatePerson_VeryOldNoDeath_StaysLiving_NoAgePresumption()
+    {
+        var token = await RegisterAndLoginAsync("ls_old@example.com");
+        var treeId = await CreateTreeAsync(token);
+        SetBearer(token);
+
+        var response = await Client.PostAsJsonAsync(
+            $"/trees/{treeId}/persons",
+            new
+            {
+                firstName = "Old",
+                lastName = "Timer",
+                birthDate = new DateOnly(1850, 1, 1),
+            }
+        );
+        var body = await response.Content.ReadFromJsonAsync<CreatePersonResponse>();
+        Assert.Equal(LivingStatus.Living, body!.Status);
+    }
+
+    [Fact]
+    public async Task ConfirmedDeceased_RoundTripsThroughGet()
+    {
+        var token = await RegisterAndLoginAsync("ls_roundtrip@example.com");
+        var treeId = await CreateTreeAsync(token);
+        SetBearer(token);
+
+        var create = await Client.PostAsJsonAsync(
+            $"/trees/{treeId}/persons",
+            new
+            {
+                firstName = "Round",
+                lastName = "Trip",
+                confirmedDeceased = true,
+            }
+        );
+        var created = await create.Content.ReadFromJsonAsync<CreatePersonResponse>();
+
+        var get = await Client.GetAsync($"/trees/{treeId}/persons/{created!.Id}");
+        var fetched = await get.Content.ReadFromJsonAsync<GetPersonResponse>();
+        Assert.True(fetched!.ConfirmedDeceased);
+        Assert.Equal(LivingStatus.Deceased, fetched.Status);
+    }
+
+    [Fact]
+    public async Task UpdatePerson_CanSetAndClearConfirmedDeceased()
+    {
+        var token = await RegisterAndLoginAsync("ls_setclear@example.com");
+        var treeId = await CreateTreeAsync(token);
+        var personId = await CreatePersonAsync(token, treeId);
+        SetBearer(token);
+
+        var set = await Client.PutAsJsonAsync(
+            $"/trees/{treeId}/persons/{personId}",
+            new
+            {
+                firstName = "Jane",
+                lastName = "Doe",
+                confirmedDeceased = true,
+            }
+        );
+        var setBody = await set.Content.ReadFromJsonAsync<UpdatePersonResponse>();
+        Assert.True(setBody!.ConfirmedDeceased);
+        Assert.Equal(LivingStatus.Deceased, setBody.Status);
+
+        var clear = await Client.PutAsJsonAsync(
+            $"/trees/{treeId}/persons/{personId}",
+            new
+            {
+                firstName = "Jane",
+                lastName = "Doe",
+                confirmedDeceased = false,
+            }
+        );
+        var clearBody = await clear.Content.ReadFromJsonAsync<UpdatePersonResponse>();
+        Assert.False(clearBody!.ConfirmedDeceased);
+        Assert.Equal(LivingStatus.Unknown, clearBody.Status);
+    }
+
     // --- UPDATE ---
 
     [Fact]

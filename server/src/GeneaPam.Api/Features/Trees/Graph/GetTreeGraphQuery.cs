@@ -1,4 +1,5 @@
 using ErrorOr;
+using GeneaPam.Api.Features.Persons;
 using GeneaPam.Api.Features.Trees.Internal;
 using GeneaPam.Api.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -36,7 +37,7 @@ public static class GetTreeGraphQuery
                 $"{p.FirstName} {p.LastName}",
                 p.BirthDate?.Year,
                 p.DeathDate?.Year,
-                p.DeathDate is null
+                LivingStatus.From(p.BirthDate, p.DeathDate, p.ConfirmedDeceased)
             ))
             .ToList();
 

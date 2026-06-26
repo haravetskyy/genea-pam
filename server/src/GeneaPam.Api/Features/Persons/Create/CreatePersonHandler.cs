@@ -36,6 +36,7 @@ public static class CreatePersonHandler
             BirthDatePrecision = command.BirthDatePrecision,
             DeathDate = command.DeathDate,
             DeathDatePrecision = command.DeathDatePrecision,
+            ConfirmedDeceased = command.ConfirmedDeceased,
             CreatedBy = command.CreatedBy,
             CreatedAt = command.CreatedAt,
             UpdatedBy = command.UpdatedBy,
@@ -54,7 +55,9 @@ public static class CreatePersonHandler
             person.BirthDate,
             person.BirthDatePrecision,
             person.DeathDate,
-            person.DeathDatePrecision
+            person.DeathDatePrecision,
+            person.ConfirmedDeceased,
+            LivingStatus.From(person.BirthDate, person.DeathDate, person.ConfirmedDeceased)
         );
     }
 }
