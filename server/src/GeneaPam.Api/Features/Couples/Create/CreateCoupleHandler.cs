@@ -31,7 +31,7 @@ public static class CreateCoupleHandler
             TreeId = command.TreeId,
             PersonAId = command.PersonAId,
             PersonBId = command.PersonBId,
-            Type = "Partner",
+            Type = command.Type,
             CreatedBy = command.CreatedBy,
             CreatedAt = command.CreatedAt,
             UpdatedBy = command.UpdatedBy,

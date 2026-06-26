@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using ErrorOr;
+using GeneaPam.Api.Features.Couples.Internal;
 using GeneaPam.Api.Infrastructure.Http;
 using Wolverine;
 
@@ -28,7 +29,17 @@ public sealed class CreateCoupleEndpoint : IEndpoint
     {
         var userId = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-        var command = new CreateCoupleCommand(treeId, userId, request.PersonAId, request.PersonBId);
+        var type = CoupleTypeParsing.Parse(request.Type);
+        if (type.IsError)
+            return type.Errors.ToProblemResult();
+
+        var command = new CreateCoupleCommand(
+            treeId,
+            userId,
+            request.PersonAId,
+            request.PersonBId,
+            type.Value
+        );
         var result = await bus.InvokeAsync<ErrorOr<CreateCoupleResponse>>(
             command,
             cancellationToken

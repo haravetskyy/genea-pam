@@ -13,6 +13,7 @@ using GeneaPam.Api.Infrastructure.Persistence;
 using GeneaPam.Api.IntegrationTests.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Npgsql;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
 
@@ -232,7 +233,7 @@ public sealed class CoupleTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.Equal(treeId, body.TreeId);
         Assert.Equal(personAId, body.PersonAId);
         Assert.Equal(personBId, body.PersonBId);
-        Assert.Equal("Partner", body.Type);
+        Assert.Equal("Partners", body.Type.Value);
     }
 
     [Fact]
@@ -251,6 +252,128 @@ public sealed class CoupleTests(ApiFactory factory) : IntegrationTest(factory)
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         Assert.NotNull(response.Headers.Location);
+    }
+
+    [Fact]
+    public async Task CreateCouple_WithExplicitType_RoundTripsThatType()
+    {
+        var token = await RegisterAndLoginAsync("cc_type_roundtrip@example.com");
+        var treeId = await CreateTreeAsync(token);
+        var personAId = await CreatePersonAsync(token, treeId, "Alice", "Smith");
+        var personBId = await CreatePersonAsync(token, treeId, "Bob", "Smith");
+        SetBearer(token);
+
+        var response = await Client.PostAsJsonAsync(
+            $"/trees/{treeId}/couples",
+            new
+            {
+                personAId,
+                personBId,
+                type = "Married",
+            }
+        );
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<CreateCoupleResponse>();
+        Assert.NotNull(body);
+        Assert.Equal("Married", body.Type.Value);
+    }
+
+    [Theory]
+    [InlineData("Married")]
+    [InlineData("Partners")]
+    [InlineData("Separated")]
+    [InlineData("Divorced")]
+    [InlineData("Other")]
+    public async Task CreateCouple_EachValidType_RoundTrips(string type)
+    {
+        var token = await RegisterAndLoginAsync($"cc_type_{type.ToLowerInvariant()}@example.com");
+        var treeId = await CreateTreeAsync(token);
+        var personAId = await CreatePersonAsync(token, treeId, "Alice", "Smith");
+        var personBId = await CreatePersonAsync(token, treeId, "Bob", "Smith");
+        SetBearer(token);
+
+        var response = await Client.PostAsJsonAsync(
+            $"/trees/{treeId}/couples",
+            new
+            {
+                personAId,
+                personBId,
+                type,
+            }
+        );
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<CreateCoupleResponse>();
+        Assert.Equal(type, body!.Type.Value);
+    }
+
+    [Fact]
+    public async Task CreateCouple_TypeOmitted_DefaultsToPartners()
+    {
+        var token = await RegisterAndLoginAsync("cc_type_default@example.com");
+        var treeId = await CreateTreeAsync(token);
+        var personAId = await CreatePersonAsync(token, treeId, "Alice", "Smith");
+        var personBId = await CreatePersonAsync(token, treeId, "Bob", "Smith");
+        SetBearer(token);
+
+        var response = await Client.PostAsJsonAsync(
+            $"/trees/{treeId}/couples",
+            new { personAId, personBId }
+        );
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<CreateCoupleResponse>();
+        Assert.Equal("Partners", body!.Type.Value);
+    }
+
+    [Fact]
+    public async Task CreateCouple_InvalidType_Returns422WithProblemCode()
+    {
+        var token = await RegisterAndLoginAsync("cc_type_invalid@example.com");
+        var treeId = await CreateTreeAsync(token);
+        var personAId = await CreatePersonAsync(token, treeId, "Alice", "Smith");
+        var personBId = await CreatePersonAsync(token, treeId, "Bob", "Smith");
+        SetBearer(token);
+
+        var response = await Client.PostAsJsonAsync(
+            $"/trees/{treeId}/couples",
+            new
+            {
+                personAId,
+                personBId,
+                type = "Engaged",
+            }
+        );
+
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
+        var problem = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("Couple.TypeInvalid", problem.GetProperty("errorCode").GetString());
+    }
+
+    [Fact]
+    public async Task CreateCouple_TypeDbCheckConstraint_RejectsOutOfSetValue()
+    {
+        var token = await RegisterAndLoginAsync("cc_type_dbcheck@example.com");
+        var treeId = await CreateTreeAsync(token);
+        var pA = await CreatePersonAsync(token, treeId, "Alice", "Smith");
+        var pB = await CreatePersonAsync(token, treeId, "Bob", "Smith");
+        var coupleId = await CreateCoupleAsync(token, treeId, pA, pB);
+
+        await using var scope = Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        // Bypass the app layer and write a bad value straight to the column.
+        var ex = await Assert.ThrowsAsync<PostgresException>(async () =>
+        {
+            await db.Database.ExecuteSqlRawAsync(
+                "UPDATE couples SET type = 'Engaged' WHERE id = {0}",
+                coupleId
+            );
+        });
+
+        Assert.Equal("23514", ex.SqlState); // check_violation
+        Assert.Contains("ck_couples_type", ex.Message);
     }
 
     [Fact]
