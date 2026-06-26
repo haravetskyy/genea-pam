@@ -13,8 +13,13 @@ A genealogical individual who exists inside a family tree — has facts, relatio
 _Avoid_: Individual, member, record
 
 **Living status**:
-A derived two-state property of a Person: Living (no death date Fact and Confirmed deceased not set) or Deceased (has a death date Fact, or Confirmed deceased is set). Overridable via the Confirmed deceased flag.
-_Avoid_: Status, alive status, death status
+A derived three-state property of a Person, computed from data presence (never stored), with values `Deceased`, `Living`, and `Unknown`:
+- **Deceased** — has a death date Fact, or Confirmed deceased is set.
+- **Living** — not Deceased, and has a birth date Fact.
+- **Unknown** — not Deceased, and has no birth date Fact (nothing temporal is known).
+
+Derivation is pure presence-of-data: there is no age-based presumption (a person born long ago with no death date is not auto-presumed Deceased). The only stored input the User controls directly is the Confirmed deceased flag; the rest derives from the birth and death date Facts. A Person with no recorded dates resolves to `Unknown`, not `Living` — absence of a death date is never asserted as proof of life.
+_Avoid_: Status, alive status, death status, two-state, IsLiving
 
 **Timeline event**:
 A typed life event on a Person's timeline, stored as a Fact record. Either auto-derived from existing Facts (birth, marriage, death) or manually added (military service, immigration, education, etc.). Has an optional date, place, description, and Citation.
@@ -60,8 +65,12 @@ _Avoid_: Date accuracy, date granularity, precision level
 A boolean flag on a Person explicitly set by the User to indicate the Person is deceased when no death date Fact exists.
 _Avoid_: Presumed deceased, death confirmed, deceased override
 
+**Source**:
+A reusable record of where genealogical information comes from (name, URL, repository), owned by a Tree. One Source is cited by many Facts via Citations — "cite once, reference many". Deleting a Source that is still cited is blocked; deleting the Tree cascades its Sources.
+_Avoid_: Citation (a Source is the document; a Citation is the link to it), reference
+
 **Citation**:
-A record attached to a Fact that documents its source (source name, URL, date accessed, page/reference, notes). A Fact can have multiple Citations.
+A join record linking a Fact to a Source, carrying the source-specific detail of that link (page/reference, date accessed, notes). A Fact can have multiple Citations; a Source can be referenced by Citations on many Facts.
 _Avoid_: Source citation, source, reference
 
 **Cross-tree link**:
@@ -77,20 +86,20 @@ A record associating a User with a Tree, carrying a role (Owner, Editor, Viewer)
 _Avoid_: Access grant, collaboration, role (when referring to this construct)
 
 **Filiation**:
-The record linking a Person (as child) to a Couple, carrying a parentage type (Biological, Adoptive, Step, Foster). A Person can have multiple Filiations with different parentage types.
-_Avoid_: Child link, parentage, child record
+The record linking a Person (as child) directly to a single parent Person, carrying a parentage type (Biological, Adoptive, Step, Foster). Parentage is **per-parent**: a child has one Filiation per parent, and the two parents of a child may have different parentage types (e.g. Biological to one, Step to the other). A child with two parents has two Filiations; a single-parent child has one. Filiations are not owned by a Couple — they are independent child→parent edges scoped to a Tree. Co-parenthood (that two parents form a unit) is derived, not stored: two parents who share a child and are also in a Couple were partners.
+_Avoid_: Child link, parentage, child record, parent link, couple filiation
 
 **Couple**:
-A pairing of two Persons (or one, for single-parent relationships) with a type (Married, Partners, Separated, Divorced, Other), optional start and end dates, and zero or more Filiations. The structural unit through which parent–child relationships are expressed.
-_Avoid_: Union, partnership, relationship (when referring specifically to this construct)
+A marriage or partnership record between two Persons, with a type (Married, Partners, Separated, Divorced, Other) and optional start and end dates (stored as Facts). A Couple is a union record only — it does **not** contain or express parent–child relationships; those live on Filiations, which link children directly to individual parents. The two person slots are interchangeable (no role, gender, or primacy distinction). Deleting either partner deletes the Couple record.
+_Avoid_: Relationship (when referring specifically to this construct), parent container, family unit
 
 **Tree**:
 The top-level container a User creates, names, and owns. Contains Persons, their Facts, their Couples, and their Filiations. Has a visibility setting (public or private) and a designated owner.
 _Avoid_: Family tree, genealogy, archive
 
 **Fact**:
-A typed, sourced datum attached to a Person (e.g. birth date, birth place, death date). Stored as a discrete record, not a flat field.
-_Avoid_: Field, attribute, property
+A typed, sourced datum attached to a Person *or* a Couple (e.g. birth date, birth place, death date, couple start/end), stored as a discrete record, not a flat field. Every Fact has exactly one owner (a Person or a Couple, never both). A Fact's type determines its kind: an Event (dated, place-bearing — birth, death, marriage) or an Attribute (stable, single-valued — gender, nationality, religion, occupation). Both kinds can carry Citations.
+_Avoid_: Field, attribute (as a synonym — Attribute is a specific Fact kind), property
 
 **Primary fact**:
 The fact record designated by the User as authoritative when multiple facts of the same type exist for a Person.
