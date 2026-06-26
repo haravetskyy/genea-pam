@@ -3,7 +3,7 @@
 - **Status:** Accepted
 - **Date:** 2026-06-26
 - **Deciders:** Product owner
-- **Related:** requirements §5.3 (Living status, Confirmed deceased), §8.2 (node card), §9.2 (living-status search filter), §10 (privacy defaults differ for living persons); CONTEXT.md (Living status, Confirmed deceased — **updated by this ADR**); ADR 0001 (enum-as-string). Hardening phase — strengthening the Mini MVP (#58).
+- **Related:** requirements §5.3 (Living status, Confirmed deceased), §8.2 (node card), §9.2 (living-status search filter), §10 (privacy defaults differ for living persons); CONTEXT.md (Living status, Confirmed deceased — **updated by this ADR**); ADR 0001 (enum-as-string), ADR 0006 (smart-enum implementation), ADR 0007 (unknown-representation rule — why `LivingStatus` carries an explicit `Unknown` member). Hardening phase — strengthening the Mini MVP (#58).
 
 ## Context
 
@@ -16,7 +16,7 @@ CONTEXT.md previously defined Living status as a **two-state** property (Living 
 
 ## Decisions
 
-1. **Living status is a three-state derived property: `Living` / `Deceased` / `Unknown`.** This intentionally **overrides CONTEXT.md's prior two-state definition** (CONTEXT.md is updated in the same change). Rationale: collapsing "nothing is known" into "Living" asserts a fact the data does not support; an explicit `Unknown` is the honest model and is what §10 privacy needs to avoid wrongly treating an unproven Person as living.
+1. **Living status is a three-state derived property: `Living` / `Deceased` / `Unknown`.** This intentionally **overrides CONTEXT.md's prior two-state definition** (CONTEXT.md is updated in the same change). Rationale: collapsing "nothing is known" into "Living" asserts a fact the data does not support; an explicit `Unknown` is the honest model and is what §10 privacy needs to avoid wrongly treating an unproven Person as living. (Per the ADR 0007 rule, `Unknown` is an explicit member here, not `null`: status is derived and always resolves to a value, and `Unknown` is a real computed outcome — ADR 0007 cases 1 and 3.)
 
 2. **Derivation is pure presence-of-data (Rule X) — no age heuristic.**
    - `Deceased` — `DeathDate` present **OR** `ConfirmedDeceased` set.
