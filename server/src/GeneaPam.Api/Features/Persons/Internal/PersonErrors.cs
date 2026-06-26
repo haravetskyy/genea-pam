@@ -13,4 +13,9 @@ public static class PersonErrors
         code: "Person.FirstNameRequired",
         description: "Person first name is required."
     );
+
+    public static readonly Error GenderInvalid = Error.Validation(
+        code: "Person.GenderInvalid",
+        description: "Gender must be one of: Male, Female, Other."
+    );
 }

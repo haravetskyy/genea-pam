@@ -5,7 +5,7 @@ public sealed record GetPersonResponse(
     Guid TreeId,
     string FirstName,
     string LastName,
-    string? Gender,
+    GenderType? Gender,
     DateOnly? BirthDate,
     string? BirthDatePrecision,
     DateOnly? DeathDate,

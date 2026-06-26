@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using ErrorOr;
+using GeneaPam.Api.Features.Persons.Internal;
 using GeneaPam.Api.Infrastructure.Http;
 using Wolverine;
 
@@ -28,12 +29,16 @@ public sealed class CreatePersonEndpoint : IEndpoint
     {
         var userId = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
+        var gender = GenderParsing.Parse(request.Gender);
+        if (gender.IsError)
+            return gender.Errors.ToProblemResult();
+
         var command = new CreatePersonCommand(
             treeId,
             userId,
             request.FirstName,
             request.LastName,
-            request.Gender,
+            gender.Value,
             request.BirthDate,
             request.BirthDatePrecision,
             request.DeathDate,

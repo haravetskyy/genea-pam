@@ -14,6 +14,7 @@ using GeneaPam.Api.Infrastructure.Persistence;
 using GeneaPam.Api.IntegrationTests.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Npgsql;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
 
@@ -234,6 +235,124 @@ public sealed class PersonTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
+    // --- GENDER (GenderType enum, #103) ---
+
+    [Theory]
+    [InlineData("Male")]
+    [InlineData("Female")]
+    [InlineData("Other")]
+    public async Task CreatePerson_ValidGender_RoundTripsThroughGet(string gender)
+    {
+        var token = await RegisterAndLoginAsync($"gender_valid_{gender}@example.com");
+        var treeId = await CreateTreeAsync(token);
+        SetBearer(token);
+
+        var createResponse = await Client.PostAsJsonAsync(
+            $"/trees/{treeId}/persons",
+            new
+            {
+                firstName = "Pat",
+                lastName = "Lee",
+                gender,
+            }
+        );
+        Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
+        var created = await createResponse.Content.ReadFromJsonAsync<GetPersonResponse>();
+        Assert.Equal(gender, created!.Gender?.Value);
+
+        var getResponse = await Client.GetAsync($"/trees/{treeId}/persons/{created.Id}");
+        var fetched = await getResponse.Content.ReadFromJsonAsync<GetPersonResponse>();
+        Assert.Equal(gender, fetched!.Gender?.Value);
+    }
+
+    [Fact]
+    public async Task CreatePerson_OmittedGender_RoundTripsAsNull()
+    {
+        var token = await RegisterAndLoginAsync("gender_omitted@example.com");
+        var treeId = await CreateTreeAsync(token);
+        SetBearer(token);
+
+        var createResponse = await Client.PostAsJsonAsync(
+            $"/trees/{treeId}/persons",
+            new { firstName = "Pat", lastName = "Lee" }
+        );
+        Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
+        var created = await createResponse.Content.ReadFromJsonAsync<GetPersonResponse>();
+        Assert.Null(created!.Gender);
+
+        var getResponse = await Client.GetAsync($"/trees/{treeId}/persons/{created.Id}");
+        var fetched = await getResponse.Content.ReadFromJsonAsync<GetPersonResponse>();
+        Assert.Null(fetched!.Gender);
+    }
+
+    [Fact]
+    public async Task CreatePerson_InvalidGender_Returns422()
+    {
+        var token = await RegisterAndLoginAsync("gender_invalid@example.com");
+        var treeId = await CreateTreeAsync(token);
+        SetBearer(token);
+
+        var response = await Client.PostAsJsonAsync(
+            $"/trees/{treeId}/persons",
+            new
+            {
+                firstName = "Pat",
+                lastName = "Lee",
+                gender = "Apache",
+            }
+        );
+
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
+        var problem = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("Person.GenderInvalid", problem.GetProperty("errorCode").GetString());
+    }
+
+    [Fact]
+    public async Task UpdatePerson_InvalidGender_Returns422()
+    {
+        var token = await RegisterAndLoginAsync("gender_update_invalid@example.com");
+        var treeId = await CreateTreeAsync(token);
+        var personId = await CreatePersonAsync(token, treeId);
+        SetBearer(token);
+
+        var response = await Client.PutAsJsonAsync(
+            $"/trees/{treeId}/persons/{personId}",
+            new
+            {
+                firstName = "Pat",
+                lastName = "Lee",
+                gender = "Klingon",
+            }
+        );
+
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
+        var problem = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("Person.GenderInvalid", problem.GetProperty("errorCode").GetString());
+    }
+
+    [Fact]
+    public async Task Gender_DbCheckConstraint_RejectsOutOfSetValue()
+    {
+        var token = await RegisterAndLoginAsync("gender_dbcheck@example.com");
+        var treeId = await CreateTreeAsync(token);
+        var personId = await CreatePersonAsync(token, treeId);
+
+        await using var scope = Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        // Bypass the app layer and write a bad value straight to the column.
+        var ex = await Assert.ThrowsAsync<PostgresException>(async () =>
+        {
+            await db.Database.ExecuteSqlRawAsync(
+                "UPDATE persons SET gender = 'Martian' WHERE id = {0}",
+                personId
+            );
+        });
+
+        Assert.Equal("23514", ex.SqlState); // check_violation
+        Assert.Contains("ck_persons_gender", ex.Message);
+    }
+
     // --- UPDATE ---
 
     [Fact]
@@ -259,7 +378,7 @@ public sealed class PersonTests(ApiFactory factory) : IntegrationTest(factory)
         var body = await response.Content.ReadFromJsonAsync<UpdatePersonResponse>();
         Assert.Equal("John", body!.FirstName);
         Assert.Equal("Smith", body.LastName);
-        Assert.Equal("Male", body.Gender);
+        Assert.Equal("Male", body.Gender?.Value);
     }
 
     [Fact]
