@@ -3,7 +3,7 @@
 - **Status:** Accepted
 - **Date:** 2026-06-26
 - **Deciders:** Product owner
-- **Related:** requirements §5.5 (person deletion), §7.1 (relationship types, single parent), §7.2 (parentage type, child in multiple relationships, sibling derivation), §8.3 (drawer relationships), §1.4 (account deletion); CONTEXT.md (Couple, Filiation — **rewritten by this ADR**); ADR 0001 (couple-date Facts, enum-as-string, DB-CHECK integrity), ADR 0004 (ParentageType enum). Hardening phase, but this thread is a deliberate **re-architecture** of the parent–child core, larger than a hardening tweak.
+- **Related:** requirements §5.5 (person deletion), §7.1 (relationship types, single parent), §7.2 (parentage type, child in multiple relationships, sibling derivation), §8.3 (drawer relationships), §1.4 (account deletion); CONTEXT.md (Couple, Filiation — **rewritten by this ADR**); ADR 0001 (couple-date Facts, enum-as-string, DB-CHECK integrity), ADR 0004 (ParentageType enum), ADR 0006 (smart-enum implementation — how ParentageType is built). Hardening phase, but this thread is a deliberate **re-architecture** of the parent–child core, larger than a hardening tweak.
 
 ## Context
 
@@ -19,7 +19,7 @@ We surveyed prior art: **GEDCOM** and **Gramps** both model the parent–child l
 
 ## Decisions
 
-1. **The Filiation is an independent child→parent edge, not a child→couple link.** `Filiation(childPersonId, parentPersonId, ParentageType)`. A two-parent child has two Filiations; a single-parent child has one. Parentage is **per-parent**, so asymmetric parentage (Biological to one parent, Step to the other) is expressible (§7.2). The `ParentageType` enum is unchanged from ADR 0004 (`Biological | Adoptive | Step | Foster`, default `Biological`).
+1. **The Filiation is an independent child→parent edge, not a child→couple link.** `Filiation(childPersonId, parentPersonId, ParentageType)`. A two-parent child has two Filiations; a single-parent child has one. Parentage is **per-parent**, so asymmetric parentage (Biological to one parent, Step to the other) is expressible (§7.2). The `ParentageType` enum is unchanged from ADR 0004 (`Biological | Adoptive | Step | Foster`, default `Biological`); it is a request-bound closed enum, so it is implemented as a **smart enum per ADR 0006** (string column + `CHECK`, `Parse` → RFC 9457 422 on an unknown value).
 
 2. **The Couple is a union record only, decoupled from parenthood.** A Couple is a marriage/partnership between two Persons carrying the relationship type (ADR 0004 `CoupleType`) and optional start/end date Facts (ADR 0001). It contains no children and does not express parent–child relationships. *This supersedes* the prior model and the earlier provisional decisions (couple-as-sole-parent-container, nullable `PersonBId`, slot-A normalization CHECK, promote-B-into-A) — all dissolved.
 
