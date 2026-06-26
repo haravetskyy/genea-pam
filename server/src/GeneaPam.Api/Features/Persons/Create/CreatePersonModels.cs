@@ -9,7 +9,8 @@ public sealed record CreatePersonRequest(
     DateOnly? BirthDate,
     string? BirthDatePrecision,
     DateOnly? DeathDate,
-    string? DeathDatePrecision
+    string? DeathDatePrecision,
+    bool ConfirmedDeceased = false
 );
 
 public sealed record CreatePersonResponse(
@@ -21,7 +22,9 @@ public sealed record CreatePersonResponse(
     DateOnly? BirthDate,
     string? BirthDatePrecision,
     DateOnly? DeathDate,
-    string? DeathDatePrecision
+    string? DeathDatePrecision,
+    bool ConfirmedDeceased,
+    LivingStatus Status
 );
 
 public sealed record CreatePersonCommand(
@@ -33,7 +36,8 @@ public sealed record CreatePersonCommand(
     DateOnly? BirthDate,
     string? BirthDatePrecision,
     DateOnly? DeathDate,
-    string? DeathDatePrecision
+    string? DeathDatePrecision,
+    bool ConfirmedDeceased
 ) : ICreateCommand, IUpdateCommand
 {
     public string CreatedBy { get; set; } = string.Empty;

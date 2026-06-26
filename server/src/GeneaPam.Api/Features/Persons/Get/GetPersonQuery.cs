@@ -25,22 +25,23 @@ public static class GetPersonQuery
 
         var person = await db
             .Persons.Where(p => p.Id == id && p.TreeId == treeId)
-            .Select(p => new GetPersonResponse(
-                p.Id,
-                p.TreeId,
-                p.FirstName,
-                p.LastName,
-                p.Gender,
-                p.BirthDate,
-                p.BirthDatePrecision,
-                p.DeathDate,
-                p.DeathDatePrecision
-            ))
             .FirstOrDefaultAsync(cancellationToken);
 
         if (person is null)
             return PersonErrors.NotFound;
 
-        return person;
+        return new GetPersonResponse(
+            person.Id,
+            person.TreeId,
+            person.FirstName,
+            person.LastName,
+            person.Gender,
+            person.BirthDate,
+            person.BirthDatePrecision,
+            person.DeathDate,
+            person.DeathDatePrecision,
+            person.ConfirmedDeceased,
+            LivingStatus.From(person.BirthDate, person.DeathDate, person.ConfirmedDeceased)
+        );
     }
 }

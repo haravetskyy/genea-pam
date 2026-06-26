@@ -26,6 +26,11 @@ public sealed class PersonConfiguration : IEntityTypeConfiguration<Person>
         builder.Property(p => p.BirthDatePrecision).HasColumnName("birth_date_precision");
         builder.Property(p => p.DeathDate).HasColumnName("death_date");
         builder.Property(p => p.DeathDatePrecision).HasColumnName("death_date_precision");
+        builder
+            .Property(p => p.ConfirmedDeceased)
+            .HasColumnName("confirmed_deceased")
+            .HasDefaultValue(false)
+            .IsRequired();
         builder.Property(p => p.CreatedBy).HasColumnName("created_by").IsRequired();
         builder.Property(p => p.CreatedAt).HasColumnName("created_at");
         builder.Property(p => p.UpdatedBy).HasColumnName("updated_by").IsRequired();

@@ -1,3 +1,5 @@
+using GeneaPam.Api.Features.Persons;
+
 namespace GeneaPam.Api.Features.Trees.Graph;
 
 public sealed record GraphNode(
@@ -5,7 +7,7 @@ public sealed record GraphNode(
     string FullName,
     int? BirthYear,
     int? DeathYear,
-    bool IsLiving
+    LivingStatus Status
 );
 
 public sealed record GraphEdge(

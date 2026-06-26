@@ -9,5 +9,7 @@ public sealed record GetPersonResponse(
     DateOnly? BirthDate,
     string? BirthDatePrecision,
     DateOnly? DeathDate,
-    string? DeathDatePrecision
+    string? DeathDatePrecision,
+    bool ConfirmedDeceased,
+    LivingStatus Status
 );

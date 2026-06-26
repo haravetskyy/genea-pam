@@ -44,7 +44,8 @@ public sealed class UpdatePersonEndpoint : IEndpoint
             request.BirthDate,
             request.BirthDatePrecision,
             request.DeathDate,
-            request.DeathDatePrecision
+            request.DeathDatePrecision,
+            request.ConfirmedDeceased
         );
         var result = await bus.InvokeAsync<ErrorOr<UpdatePersonResponse>>(
             command,

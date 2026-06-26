@@ -42,7 +42,8 @@ public sealed class CreatePersonEndpoint : IEndpoint
             request.BirthDate,
             request.BirthDatePrecision,
             request.DeathDate,
-            request.DeathDatePrecision
+            request.DeathDatePrecision,
+            request.ConfirmedDeceased
         );
         var result = await bus.InvokeAsync<ErrorOr<CreatePersonResponse>>(
             command,

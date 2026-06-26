@@ -6,7 +6,9 @@ using System.Text;
 using GeneaPam.Api.Features.Auth.Login;
 using GeneaPam.Api.Features.Couples.AddFiliation;
 using GeneaPam.Api.Features.Couples.Create;
+using GeneaPam.Api.Features.Persons;
 using GeneaPam.Api.Features.Persons.Create;
+using GeneaPam.Api.Features.Persons.Get;
 using GeneaPam.Api.Features.Trees.Create;
 using GeneaPam.Api.Features.Trees.Graph;
 using GeneaPam.Api.IntegrationTests.Infrastructure;
@@ -75,7 +77,8 @@ public sealed class TreeGraphTests(ApiFactory factory) : IntegrationTest(factory
         string firstName = "Jane",
         string lastName = "Doe",
         DateOnly? birthDate = null,
-        DateOnly? deathDate = null
+        DateOnly? deathDate = null,
+        bool confirmedDeceased = false
     )
     {
         SetBearer(token);
@@ -90,6 +93,7 @@ public sealed class TreeGraphTests(ApiFactory factory) : IntegrationTest(factory
                 birthDatePrecision = birthDate.HasValue ? "Year" : (string?)null,
                 deathDate,
                 deathDatePrecision = deathDate.HasValue ? "Year" : (string?)null,
+                confirmedDeceased,
             }
         );
         var body = await response.Content.ReadFromJsonAsync<CreatePersonResponse>();
@@ -202,12 +206,115 @@ public sealed class TreeGraphTests(ApiFactory factory) : IntegrationTest(factory
         var alice = body.Nodes.Single(n => n.FullName == "Alice Smith");
         Assert.Equal(1990, alice.BirthYear);
         Assert.Null(alice.DeathYear);
-        Assert.True(alice.IsLiving);
+        Assert.Equal(LivingStatus.Living, alice.Status);
 
         var bob = body.Nodes.Single(n => n.FullName == "Bob Smith");
         Assert.Equal(1985, bob.BirthYear);
         Assert.Equal(2020, bob.DeathYear);
-        Assert.False(bob.IsLiving);
+        Assert.Equal(LivingStatus.Deceased, bob.Status);
+    }
+
+    [Fact]
+    public async Task GetTreeGraph_NodeWithNoDates_ReturnsUnknownStatus()
+    {
+        var token = await RegisterAndLoginAsync("graph_unknown@example.com");
+        var treeId = await CreateTreeAsync(token);
+        await CreatePersonAsync(token, treeId, "Nemo", "Nobody");
+        SetBearer(token);
+
+        var response = await Client.GetAsync($"/trees/{treeId}/graph");
+        var body = await response.Content.ReadFromJsonAsync<GetTreeGraphResponse>();
+
+        var node = body!.Nodes.Single(n => n.FullName == "Nemo Nobody");
+        Assert.Null(node.BirthYear);
+        Assert.Null(node.DeathYear);
+        Assert.Equal(LivingStatus.Unknown, node.Status);
+    }
+
+    [Fact]
+    public async Task GetTreeGraph_ConfirmedDeceasedWithNoDeathDate_ReturnsDeceased()
+    {
+        var token = await RegisterAndLoginAsync("graph_confirmed@example.com");
+        var treeId = await CreateTreeAsync(token);
+        SetBearer(token);
+        await Client.PostAsJsonAsync(
+            $"/trees/{treeId}/persons",
+            new
+            {
+                firstName = "Gone",
+                lastName = "Person",
+                birthDate = new DateOnly(1900, 1, 1),
+                confirmedDeceased = true,
+            }
+        );
+
+        var response = await Client.GetAsync($"/trees/{treeId}/graph");
+        var body = await response.Content.ReadFromJsonAsync<GetTreeGraphResponse>();
+
+        var node = body!.Nodes.Single(n => n.FullName == "Gone Person");
+        Assert.Null(node.DeathYear);
+        Assert.Equal(LivingStatus.Deceased, node.Status);
+    }
+
+    [Fact]
+    public async Task GetTreeGraph_VeryOldPersonNoDeath_StaysLiving_NoAgePresumption()
+    {
+        var token = await RegisterAndLoginAsync("graph_old@example.com");
+        var treeId = await CreateTreeAsync(token);
+        await CreatePersonAsync(
+            token,
+            treeId,
+            "Methuselah",
+            "Ancient",
+            birthDate: new DateOnly(1850, 1, 1)
+        );
+        SetBearer(token);
+
+        var response = await Client.GetAsync($"/trees/{treeId}/graph");
+        var body = await response.Content.ReadFromJsonAsync<GetTreeGraphResponse>();
+
+        var node = body!.Nodes.Single(n => n.FullName == "Methuselah Ancient");
+        Assert.Equal(LivingStatus.Living, node.Status);
+    }
+
+    [Fact]
+    public async Task GetTreeGraph_Response_HasNoIsLivingField()
+    {
+        var token = await RegisterAndLoginAsync("graph_no_isliving@example.com");
+        var treeId = await CreateTreeAsync(token);
+        await CreatePersonAsync(token, treeId, "Any", "One", birthDate: new DateOnly(1990, 1, 1));
+        SetBearer(token);
+
+        var response = await Client.GetAsync($"/trees/{treeId}/graph");
+        var raw = await response.Content.ReadAsStringAsync();
+
+        Assert.DoesNotContain("isLiving", raw, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("status", raw, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task GetTreeGraph_StatusAgreesWithPersonRead()
+    {
+        var token = await RegisterAndLoginAsync("graph_agree@example.com");
+        var treeId = await CreateTreeAsync(token);
+        var personId = await CreatePersonAsync(
+            token,
+            treeId,
+            "Sam",
+            "Doe",
+            birthDate: new DateOnly(1995, 6, 1)
+        );
+        SetBearer(token);
+
+        var graph = await (
+            await Client.GetAsync($"/trees/{treeId}/graph")
+        ).Content.ReadFromJsonAsync<GetTreeGraphResponse>();
+        var person = await (
+            await Client.GetAsync($"/trees/{treeId}/persons/{personId}")
+        ).Content.ReadFromJsonAsync<GetPersonResponse>();
+
+        var node = graph!.Nodes.Single(n => n.Id == personId);
+        Assert.Equal(person!.Status, node.Status);
     }
 
     [Fact]
