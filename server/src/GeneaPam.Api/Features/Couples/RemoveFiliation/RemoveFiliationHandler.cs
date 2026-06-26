@@ -21,15 +21,8 @@ public static class RemoveFiliationHandler
         if (!treeOwned)
             return TreeErrors.NotFound;
 
-        var coupleExists = await db.Couples.AnyAsync(
-            c => c.Id == command.CoupleId && c.TreeId == command.TreeId,
-            cancellationToken
-        );
-        if (!coupleExists)
-            return CoupleErrors.NotFound;
-
         var filiation = await db.Filiations.FirstOrDefaultAsync(
-            f => f.Id == command.Id && f.CoupleId == command.CoupleId,
+            f => f.Id == command.Id && f.TreeId == command.TreeId,
             cancellationToken
         );
         if (filiation is null)

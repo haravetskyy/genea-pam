@@ -35,14 +35,14 @@ public sealed class CoupleConfiguration : IEntityTypeConfiguration<Couple>
             .HasOne<Person>()
             .WithMany()
             .HasForeignKey(c => c.PersonAId)
-            .OnDelete(DeleteBehavior.Restrict)
+            .OnDelete(DeleteBehavior.Cascade)
             .IsRequired();
 
         builder
             .HasOne<Person>()
             .WithMany()
             .HasForeignKey(c => c.PersonBId)
-            .OnDelete(DeleteBehavior.Restrict)
+            .OnDelete(DeleteBehavior.Cascade)
             .IsRequired();
     }
 }

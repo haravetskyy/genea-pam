@@ -119,14 +119,14 @@ public sealed class TreeGraphTests(ApiFactory factory) : IntegrationTest(factory
     private async Task<Guid> AddFiliationAsync(
         string token,
         Guid treeId,
-        Guid coupleId,
-        Guid childPersonId
+        Guid childPersonId,
+        Guid parentPersonId
     )
     {
         SetBearer(token);
         var response = await Client.PostAsJsonAsync(
-            $"/trees/{treeId}/couples/{coupleId}/filiations",
-            new { childPersonId }
+            $"/trees/{treeId}/filiations",
+            new { childPersonId, parentPersonId }
         );
         var body = await response.Content.ReadFromJsonAsync<AddFiliationResponse>();
         return body!.Id;
@@ -338,20 +338,18 @@ public sealed class TreeGraphTests(ApiFactory factory) : IntegrationTest(factory
         Assert.Equal("Couple", edge.Type);
         Assert.Equal(pA, edge.PersonAId);
         Assert.Equal(pB, edge.PersonBId);
-        Assert.Null(edge.CoupleId);
-        Assert.Null(edge.ChildId);
+        Assert.Null(edge.ParentPersonId);
+        Assert.Null(edge.ChildPersonId);
     }
 
     [Fact]
-    public async Task GetTreeGraph_WithFiliation_ReturnsFiliationEdge()
+    public async Task GetTreeGraph_WithFiliation_ReturnsParentChildEdge()
     {
         var token = await RegisterAndLoginAsync("graph_filiation_edge@example.com");
         var treeId = await CreateTreeAsync(token);
-        var pA = await CreatePersonAsync(token, treeId, "Alice", "Smith");
-        var pB = await CreatePersonAsync(token, treeId, "Bob", "Smith");
+        var parent = await CreatePersonAsync(token, treeId, "Alice", "Smith");
         var child = await CreatePersonAsync(token, treeId, "Charlie", "Smith");
-        var coupleId = await CreateCoupleAsync(token, treeId, pA, pB);
-        var filiationId = await AddFiliationAsync(token, treeId, coupleId, child);
+        var filiationId = await AddFiliationAsync(token, treeId, child, parent);
         SetBearer(token);
 
         var response = await Client.GetAsync($"/trees/{treeId}/graph");
@@ -362,8 +360,8 @@ public sealed class TreeGraphTests(ApiFactory factory) : IntegrationTest(factory
 
         var filiationEdge = body.Edges.Single(e => e.Type == "Filiation");
         Assert.Equal(filiationId, filiationEdge.Id);
-        Assert.Equal(coupleId, filiationEdge.CoupleId);
-        Assert.Equal(child, filiationEdge.ChildId);
+        Assert.Equal(parent, filiationEdge.ParentPersonId);
+        Assert.Equal(child, filiationEdge.ChildPersonId);
         Assert.Null(filiationEdge.PersonAId);
         Assert.Null(filiationEdge.PersonBId);
     }
@@ -377,7 +375,7 @@ public sealed class TreeGraphTests(ApiFactory factory) : IntegrationTest(factory
         var pB = await CreatePersonAsync(token, treeId, "Bob", "Smith");
         var child = await CreatePersonAsync(token, treeId, "Charlie", "Smith");
         var coupleId = await CreateCoupleAsync(token, treeId, pA, pB);
-        await AddFiliationAsync(token, treeId, coupleId, child);
+        await AddFiliationAsync(token, treeId, child, pA);
         SetBearer(token);
 
         var response = await Client.GetAsync($"/trees/{treeId}/graph");

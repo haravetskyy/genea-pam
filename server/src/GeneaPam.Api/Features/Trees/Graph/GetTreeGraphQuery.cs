@@ -26,9 +26,8 @@ public static class GetTreeGraphQuery
 
         var couples = await db.Couples.Where(c => c.TreeId == id).ToListAsync(cancellationToken);
 
-        var coupleIds = couples.Select(c => c.Id).ToList();
         var filiations = await db
-            .Filiations.Where(f => coupleIds.Contains(f.CoupleId))
+            .Filiations.Where(f => f.TreeId == id)
             .ToListAsync(cancellationToken);
 
         var nodes = persons
@@ -55,7 +54,7 @@ public static class GetTreeGraphQuery
             "Filiation",
             null,
             null,
-            f.CoupleId,
+            f.ParentPersonId,
             f.ChildPersonId
         ));
 

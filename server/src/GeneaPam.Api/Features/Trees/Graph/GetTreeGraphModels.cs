@@ -15,8 +15,8 @@ public sealed record GraphEdge(
     string Type,
     Guid? PersonAId,
     Guid? PersonBId,
-    Guid? CoupleId,
-    Guid? ChildId
+    Guid? ParentPersonId,
+    Guid? ChildPersonId
 );
 
 public sealed record GetTreeGraphResponse(
