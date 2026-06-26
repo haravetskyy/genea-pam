@@ -8,4 +8,9 @@ public static class PersonErrors
         code: "Person.NotFound",
         description: "Person not found."
     );
+
+    public static readonly Error FirstNameRequired = Error.Validation(
+        code: "Person.FirstNameRequired",
+        description: "Person first name is required."
+    );
 }

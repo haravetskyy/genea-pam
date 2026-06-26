@@ -1,9 +1,6 @@
 using System.Security.Claims;
-using GeneaPam.Api.Features.Persons.Internal;
-using GeneaPam.Api.Features.Trees.Internal;
 using GeneaPam.Api.Infrastructure.Http;
 using GeneaPam.Api.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
 
 namespace GeneaPam.Api.Features.Persons.Get;
 
@@ -29,32 +26,8 @@ public sealed class GetPersonEndpoint : IEndpoint
     {
         var userId = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-        var tree = await db.Trees.FirstOrDefaultAsync(
-            t => t.Id == treeId && t.OwnerId == userId,
-            cancellationToken
-        );
-        if (tree is null)
-            return TreeErrors.NotFound.ToProblemResult();
+        var result = await GetPersonQuery.Handle(db, treeId, id, userId, cancellationToken);
 
-        var person = await db.Persons.FirstOrDefaultAsync(
-            p => p.Id == id && p.TreeId == treeId,
-            cancellationToken
-        );
-        if (person is null)
-            return PersonErrors.NotFound.ToProblemResult();
-
-        return Results.Ok(
-            new GetPersonResponse(
-                person.Id,
-                person.TreeId,
-                person.FirstName,
-                person.LastName,
-                person.Gender,
-                person.BirthDate,
-                person.BirthDatePrecision,
-                person.DeathDate,
-                person.DeathDatePrecision
-            )
-        );
+        return result.MatchToResponse(Results.Ok);
     }
 }

@@ -1,8 +1,7 @@
 using System.Security.Claims;
-using GeneaPam.Api.Features.Trees.Internal;
+using ErrorOr;
 using GeneaPam.Api.Infrastructure.Http;
-using GeneaPam.Api.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
+using Wolverine;
 
 namespace GeneaPam.Api.Features.Persons.Create;
 
@@ -15,59 +14,38 @@ public sealed class CreatePersonEndpoint : IEndpoint
             .WithTags("Persons")
             .Produces<CreatePersonResponse>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
-            .ProducesProblem(StatusCodes.Status404NotFound);
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
     }
 
     internal static async Task<IResult> HandleAsync(
         Guid treeId,
         CreatePersonRequest request,
         HttpContext httpContext,
-        AppDbContext db,
+        IMessageBus bus,
         CancellationToken cancellationToken
     )
     {
         var userId = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-        var tree = await db.Trees.FirstOrDefaultAsync(
-            t => t.Id == treeId && t.OwnerId == userId,
+        var command = new CreatePersonCommand(
+            treeId,
+            userId,
+            request.FirstName,
+            request.LastName,
+            request.Gender,
+            request.BirthDate,
+            request.BirthDatePrecision,
+            request.DeathDate,
+            request.DeathDatePrecision
+        );
+        var result = await bus.InvokeAsync<ErrorOr<CreatePersonResponse>>(
+            command,
             cancellationToken
         );
-        if (tree is null)
-            return TreeErrors.NotFound.ToProblemResult();
 
-        var now = DateTimeOffset.UtcNow;
-        var person = new Person
-        {
-            TreeId = treeId,
-            FirstName = request.FirstName,
-            LastName = request.LastName,
-            Gender = request.Gender,
-            BirthDate = request.BirthDate,
-            BirthDatePrecision = request.BirthDatePrecision,
-            DeathDate = request.DeathDate,
-            DeathDatePrecision = request.DeathDatePrecision,
-            CreatedBy = userId,
-            CreatedAt = now,
-            UpdatedBy = userId,
-            UpdatedAt = now,
-        };
-
-        db.Persons.Add(person);
-        await db.SaveChangesAsync(cancellationToken);
-
-        return Results.Created(
-            $"/trees/{treeId}/persons/{person.Id}",
-            new CreatePersonResponse(
-                person.Id,
-                person.TreeId,
-                person.FirstName,
-                person.LastName,
-                person.Gender,
-                person.BirthDate,
-                person.BirthDatePrecision,
-                person.DeathDate,
-                person.DeathDatePrecision
-            )
+        return result.MatchToResponse(response =>
+            Results.Created($"/trees/{treeId}/persons/{response.Id}", response)
         );
     }
 }
