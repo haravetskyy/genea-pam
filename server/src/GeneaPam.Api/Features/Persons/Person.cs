@@ -6,7 +6,7 @@ public class Person
     public Guid TreeId { get; set; }
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
-    public string? Gender { get; set; }
+    public GenderType? Gender { get; set; }
     public DateOnly? BirthDate { get; set; }
     public string? BirthDatePrecision { get; set; }
     public DateOnly? DeathDate { get; set; }

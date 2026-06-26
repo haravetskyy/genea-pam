@@ -9,13 +9,19 @@ public sealed class PersonConfiguration : IEntityTypeConfiguration<Person>
     public void Configure(EntityTypeBuilder<Person> builder)
     {
         builder.HasKey(p => p.Id);
-        builder.ToTable("persons");
+        builder.ToTable(
+            "persons",
+            t => t.HasCheckConstraint("ck_persons_gender", "gender IN ('Male','Female','Other')")
+        );
 
         builder.Property(p => p.Id).HasColumnName("id");
         builder.Property(p => p.TreeId).HasColumnName("tree_id");
         builder.Property(p => p.FirstName).HasColumnName("first_name").IsRequired();
         builder.Property(p => p.LastName).HasColumnName("last_name").IsRequired();
-        builder.Property(p => p.Gender).HasColumnName("gender");
+        builder
+            .Property(p => p.Gender)
+            .HasColumnName("gender")
+            .HasConversion(v => v!.Value, s => GenderType.TryParse(s));
         builder.Property(p => p.BirthDate).HasColumnName("birth_date");
         builder.Property(p => p.BirthDatePrecision).HasColumnName("birth_date_precision");
         builder.Property(p => p.DeathDate).HasColumnName("death_date");
