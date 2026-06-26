@@ -1,5 +1,6 @@
 using GeneaPam.Api.Infrastructure.Audit;
 using GeneaPam.Api.Infrastructure.Persistence;
+using JasperFx;
 using JasperFx.CodeGeneration;
 using Wolverine;
 using Wolverine.Configuration;

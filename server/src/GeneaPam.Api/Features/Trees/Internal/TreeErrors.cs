@@ -8,4 +8,9 @@ public static class TreeErrors
         code: "Tree.NotFound",
         description: "Tree not found."
     );
+
+    public static readonly Error NameRequired = Error.Validation(
+        code: "Tree.NameRequired",
+        description: "Tree name is required."
+    );
 }
